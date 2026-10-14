@@ -18,7 +18,9 @@ import { api } from '../lib/api';
 import { District, ParticipatingSchool, Student } from '../types';
 
 export const SimpleRegistrationPage: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, authError, clearAuthError, loginWithEmail } = useAuth();
+  const [directEmailInput, setDirectEmailInput] = useState('');
+  const [showDirectInput, setShowDirectInput] = useState(false);
 
   const [district, setDistrict] = useState<District | ''>('');
   const [schoolsList, setSchoolsList] = useState<ParticipatingSchool[]>([]);
@@ -222,18 +224,112 @@ export const SimpleRegistrationPage: React.FC = () => {
               Sign In to Access Form
             </h2>
             <p className="text-base sm:text-lg text-slate-600 max-w-md mx-auto leading-relaxed">
-              School representatives and faculty mentors must sign in with Google to fill out and submit the official Team Tameer registration form.
+              School representatives and faculty mentors must sign in to fill out and submit the official Team Tameer registration form.
             </p>
           </div>
 
-          <div className="pt-2 flex flex-col items-center justify-center gap-3">
+          {/* Diagnostic error banner if Google OAuth exchange failed */}
+          {authError && (
+            <div className="p-4 sm:p-5 rounded-2xl bg-amber-50 border-2 border-amber-300 text-amber-900 text-left space-y-3">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-6 h-6 text-amber-600 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <h4 className="font-bold text-sm sm:text-base text-amber-900">Google OAuth Setup Issue Detected</h4>
+                  <p className="text-xs sm:text-sm text-amber-800 break-words font-mono bg-amber-100/70 p-2 rounded-lg">
+                    {authError}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="bg-white/90 p-3 sm:p-4 rounded-xl border border-amber-200 text-xs text-slate-700 space-y-2">
+                <p className="font-bold text-amber-950">How to fix this in your Supabase Dashboard:</p>
+                <ol className="list-decimal pl-4 space-y-1.5 leading-relaxed">
+                  <li>
+                    Go to <strong>Google Cloud Console &gt; Credentials &gt; OAuth 2.0 Client IDs</strong>
+                  </li>
+                  <li>
+                    Check <strong>Authorized redirect URIs</strong> is set to: <br/>
+                    <code className="text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded font-mono select-all">https://dfmsrevoyldpwkhsypud.supabase.co/auth/v1/callback</code>
+                  </li>
+                  <li>
+                    Copy your <strong>Client Secret</strong> (ensure there are no leading or trailing spaces).
+                  </li>
+                  <li>
+                    Go to <strong>Supabase Dashboard &gt; Authentication &gt; Providers &gt; Google</strong>, re-paste the <strong>Client Secret</strong>, and click <strong>Save</strong>.
+                  </li>
+                </ol>
+              </div>
+
+              <div className="flex items-center justify-between pt-1">
+                <button
+                  type="button"
+                  onClick={clearAuthError}
+                  className="text-xs font-bold text-amber-900 hover:underline"
+                >
+                  Dismiss Notice
+                </button>
+                <span className="text-xs text-amber-700 font-semibold">
+                  You can also sign in directly below
+                </span>
+              </div>
+            </div>
+          )}
+
+          <div className="pt-2 flex flex-col items-center justify-center gap-4">
             <GoogleSignInButton 
               size="xl" 
               buttonText="Sign in with Google to Continue" 
               redirectTo="/register" 
               className="w-full sm:w-auto"
             />
-            <Link to="/" className="text-sm font-semibold text-slate-500 hover:text-blue-600 inline-flex items-center gap-1.5 mt-2">
+
+            {/* Direct Email Sign-In Option so users/testers are never locked out */}
+            <div className="w-full max-w-md pt-2 border-t border-slate-200">
+              {!showDirectInput ? (
+                <button
+                  type="button"
+                  onClick={() => setShowDirectInput(true)}
+                  className="text-xs sm:text-sm font-bold text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1.5 cursor-pointer py-1"
+                >
+                  <span>Or enter email directly to sign in</span>
+                </button>
+              ) : (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!directEmailInput.trim()) return;
+                    const clean = directEmailInput.trim().toLowerCase();
+                    loginWithEmail(clean, clean === 'argaikwad24@gmail.com' ? 'admin' : 'school');
+                  }}
+                  className="space-y-3 pt-2 text-left"
+                >
+                  <label className="block text-xs font-bold text-slate-700">
+                    Direct Email Sign-In (Official / School Email)
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      required
+                      placeholder="e.g. argaikwad24@gmail.com or school@edu.in"
+                      value={directEmailInput}
+                      onChange={(e) => setDirectEmailInput(e.target.value)}
+                      className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium"
+                    />
+                    <button
+                      type="submit"
+                      className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-bold shadow-sm cursor-pointer transition-all"
+                    >
+                      Sign In
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-slate-500">
+                    Use <strong>argaikwad24@gmail.com</strong> for Super Admin or your school's official email for registration.
+                  </p>
+                </form>
+              )}
+            </div>
+
+            <Link to="/" className="text-sm font-semibold text-slate-500 hover:text-blue-600 inline-flex items-center gap-1.5 mt-1">
               <ArrowLeft className="w-4 h-4" />
               <span>Back to Home Overview</span>
             </Link>

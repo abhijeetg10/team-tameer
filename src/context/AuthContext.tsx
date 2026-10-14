@@ -6,6 +6,8 @@ interface AuthContextType {
   user: UserProfile | null;
   role: UserRole | null;
   isLoading: boolean;
+  authError: string | null;
+  clearAuthError: () => void;
   loginWithGoogle: (targetRedirect?: string) => Promise<void>;
   loginWithEmail: (email: string, role?: UserRole) => void;
   loginAsDemoUser: (role: UserRole, customName?: string, customEmail?: string) => void;
@@ -21,6 +23,9 @@ const AUTH_STORAGE_KEY = 'team_tameer_auth_live_v5';
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  const clearAuthError = () => setAuthError(null);
 
   // Initialize Auth state & listen to live OAuth state changes
   useEffect(() => {
@@ -33,6 +38,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem('school_event_auth_user_v3');
       localStorage.removeItem('school_event_auth_user_v4');
     } catch {}
+
+    // Check if URL contains OAuth errors from Google/Supabase redirect
+    try {
+      const searchParams = new URLSearchParams(window.location.search);
+      const rawHash = window.location.hash.startsWith('#') ? window.location.hash.substring(1) : window.location.hash;
+      const hashParams = new URLSearchParams(rawHash);
+      
+      const errDesc = searchParams.get('error_description') || hashParams.get('error_description') || searchParams.get('error') || hashParams.get('error');
+      if (errDesc) {
+        const decoded = decodeURIComponent(errDesc.replace(/\+/g, ' '));
+        console.warn('OAuth redirect error detected:', decoded);
+        setAuthError(decoded);
+        // Clean URL so the error parameters don't stay in browser address bar
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    } catch (e) {
+      console.error('Error parsing URL params:', e);
+    }
 
     const handleSessionUser = (sessionUser: any) => {
       if (!sessionUser) return;
@@ -177,6 +200,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         role: user?.role || null,
         isLoading,
+        authError,
+        clearAuthError,
         loginWithGoogle,
         loginWithEmail,
         loginAsDemoUser,
