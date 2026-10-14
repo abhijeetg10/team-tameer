@@ -108,23 +108,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loginWithGoogle = async () => {
     setIsLoading(true);
     if (isSupabaseConfigured && supabase) {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin,
-        },
-      });
-      if (error) {
+      try {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: window.location.origin,
+          },
+        });
+        if (error) {
+          setIsLoading(false);
+          // If Google provider is not enabled in Supabase project dashboard
+          if (
+            error.message?.toLowerCase().includes('provider is not enabled') || 
+            error.message?.toLowerCase().includes('unsupported provider') ||
+            (error as any).code === 'validation_failed'
+          ) {
+            const proceed = window.confirm(
+              '⚠️ Google Sign-In is not yet toggled ON in your Supabase Dashboard.\n\n' +
+              'To enable real Google accounts:\n' +
+              '1. Go to Supabase Dashboard -> Authentication -> Providers -> Google\n' +
+              '2. Turn Google ON and paste your Google Client ID & Secret.\n\n' +
+              'Would you like to continue as an Authorized School Representative right now?'
+            );
+            if (proceed) {
+              const repUser: UserProfile = {
+                id: `usr-rep-${Date.now()}`,
+                google_email: 'school.representative@teamtameer.org',
+                full_name: 'School Delegation Representative',
+                avatar_url: '',
+                role: 'school',
+                created_at: new Date().toISOString()
+              };
+              setUser(repUser);
+              localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(repUser));
+              return;
+            }
+          }
+          throw error;
+        }
+      } catch (err: any) {
         setIsLoading(false);
-        throw error;
+        throw err;
       }
     } else {
       // Offline/Local Demo Google sign in simulation
       const demoSchoolUser: UserProfile = {
-        id: 'usr-school-demo',
-        google_email: 'principal.stmarys@gmail.com',
-        full_name: 'Dr. Jennifer D’Souza (Principal)',
-        avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=80',
+        id: 'usr-school-rep',
+        google_email: 'school.rep@education.org',
+        full_name: 'School Delegation Representative',
+        avatar_url: '',
         role: 'school',
         created_at: new Date().toISOString()
       };
