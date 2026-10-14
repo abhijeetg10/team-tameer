@@ -7,6 +7,7 @@ interface AuthContextType {
   role: UserRole | null;
   isLoading: boolean;
   loginWithGoogle: () => Promise<void>;
+  loginWithEmail: (email: string, role?: UserRole) => void;
   loginAsDemoUser: (role: UserRole, customName?: string, customEmail?: string) => void;
   logout: () => Promise<void>;
   isSupabaseLive: boolean;
@@ -202,6 +203,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(mockUser));
   };
 
+  const loginWithEmail = (email: string, role: UserRole = 'admin') => {
+    const cleanEmail = email.trim().toLowerCase();
+    const adminUser: UserProfile = {
+      id: `usr-admin-${cleanEmail.replace(/[^a-z0-9]/g, '_')}`,
+      google_email: cleanEmail,
+      full_name: cleanEmail === 'argaikwad24@gmail.com' ? 'Super Administrator (argaikwad24)' : `Admin (${cleanEmail.split('@')[0]})`,
+      avatar_url: '',
+      role: role,
+      created_at: new Date().toISOString()
+    };
+    setUser(adminUser);
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(adminUser));
+  };
+
   const logout = async () => {
     if (isSupabaseConfigured && supabase) {
       await supabase.auth.signOut();
@@ -217,6 +232,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         role: user?.role || null,
         isLoading,
         loginWithGoogle,
+        loginWithEmail,
         loginAsDemoUser,
         logout,
         isSupabaseLive: isSupabaseConfigured

@@ -6,7 +6,6 @@ import {
   UserCheck, 
   Download, 
   Search, 
-  Filter, 
   RefreshCw, 
   MapPin, 
   Phone, 
@@ -14,19 +13,49 @@ import {
   FileText, 
   Image as ImageIcon,
   CheckCircle2,
-  ExternalLink,
-  ChevronRight,
-  Sparkles
+  AlertCircle,
+  Shield,
+  ShieldAlert,
+  ShieldCheck,
+  UserPlus,
+  Trash2,
+  Lock,
+  LogOut,
+  Settings,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { GoogleSignInButton } from '../components/GoogleSignInButton';
 import { api } from '../lib/api';
-import { District, MasterSchoolListItem, FullSchoolRegistration } from '../types';
+import { 
+  DEFAULT_SUPER_ADMIN, 
+  getAuthorizedAdmins, 
+  isAuthorizedAdmin, 
+  isSuperAdmin, 
+  addAuthorizedAdmin, 
+  removeAuthorizedAdmin 
+} from '../lib/adminAuth';
+import { District, MasterSchoolListItem } from '../types';
 
 export const SimpleAdminPage: React.FC = () => {
+  const { user, logout, loginWithEmail } = useAuth();
+
   const [schools, setSchools] = useState<MasterSchoolListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedDistrict, setSelectedDistrict] = useState<'all' | District>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'submitted' | 'pending'>('all');
+
+  // Admin Access Control States
+  const [adminList, setAdminList] = useState<string[]>(getAuthorizedAdmins());
+  const [showManageAdmins, setShowManageAdmins] = useState(false);
+  const [newAdminInput, setNewAdminInput] = useState('');
+  const [adminFeedback, setAdminFeedback] = useState<{ text: string; isError: boolean } | null>(null);
+
+  // Manual Direct Admin verification state (fallback if Google OAuth is pending in Supabase)
+  const [directEmailInput, setDirectEmailInput] = useState('');
+  const [directAuthError, setDirectAuthError] = useState<string | null>(null);
 
   const loadSchools = async () => {
     setIsLoading(true);
@@ -41,8 +70,60 @@ export const SimpleAdminPage: React.FC = () => {
   };
 
   useEffect(() => {
-    loadSchools();
-  }, []);
+    if (user && isAuthorizedAdmin(user.google_email)) {
+      loadSchools();
+    }
+  }, [user]);
+
+  // Authorization checks
+  const isAuthorized = Boolean(user && isAuthorizedAdmin(user.google_email));
+  const isSuper = Boolean(user && isSuperAdmin(user.google_email));
+
+  // Handler to add admin
+  const handleAddAdmin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newAdminInput.trim()) return;
+
+    const res = addAuthorizedAdmin(newAdminInput);
+    setAdminFeedback({ text: res.message, isError: !res.success });
+    if (res.success) {
+      setAdminList(getAuthorizedAdmins());
+      setNewAdminInput('');
+    }
+    setTimeout(() => setAdminFeedback(null), 5000);
+  };
+
+  // Handler to remove admin
+  const handleRemoveAdmin = (email: string) => {
+    if (window.confirm(`Revoke admin access for ${email}?`)) {
+      const res = removeAuthorizedAdmin(email);
+      setAdminFeedback({ text: res.message, isError: !res.success });
+      if (res.success) {
+        setAdminList(getAuthorizedAdmins());
+      }
+      setTimeout(() => setAdminFeedback(null), 5000);
+    }
+  };
+
+  // Direct Admin Email Verification Handler
+  const handleDirectAdminVerify = (e: React.FormEvent) => {
+    e.preventDefault();
+    setDirectAuthError(null);
+    const clean = directEmailInput.trim().toLowerCase();
+
+    if (!clean) {
+      setDirectAuthError('Please enter an admin email address.');
+      return;
+    }
+
+    if (isAuthorizedAdmin(clean)) {
+      loginWithEmail(clean, isSuperAdmin(clean) ? 'superadmin' : 'admin');
+    } else {
+      setDirectAuthError(
+        `Access Denied: "${clean}" is not an authorized administrator. Only ${DEFAULT_SUPER_ADMIN} or emails added by the Super Admin have access.`
+      );
+    }
+  };
 
   // Filter schools
   const filtered = schools.filter((item) => {
@@ -68,8 +149,6 @@ export const SimpleAdminPage: React.FC = () => {
   // Direct download helper
   const handleDownload = (fileUrl: string, fileName: string) => {
     if (!fileUrl) return;
-
-    // If data URL or direct file
     const link = document.createElement('a');
     link.href = fileUrl;
     link.download = fileName;
@@ -129,6 +208,150 @@ export const SimpleAdminPage: React.FC = () => {
     document.body.removeChild(link);
   };
 
+  // 1. GATE 1: NOT LOGGED IN
+  if (!user) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-16 sm:py-24">
+        <div className="bg-white rounded-3xl border-2 border-slate-200 shadow-2xl p-8 sm:p-12 text-center space-y-7">
+          <div className="flex items-center justify-center gap-5">
+            <div className="p-3 bg-white rounded-2xl border border-slate-200 shadow-sm">
+              <img src="/logo.png" alt="Team Tameer Logo" className="h-16 w-16 sm:h-20 sm:w-20 object-contain" />
+            </div>
+            <div className="p-3 bg-white rounded-2xl border border-slate-200 shadow-sm">
+              <img src="/logo2.jpeg" alt="Event Logo" className="h-16 w-16 sm:h-20 sm:w-20 object-contain rounded-xl" />
+            </div>
+          </div>
+
+          <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 mx-auto flex items-center justify-center border-2 border-amber-200 shadow-inner">
+            <Shield className="w-9 h-9" />
+          </div>
+
+          <div className="space-y-2">
+            <span className="text-xs font-black uppercase tracking-wider bg-slate-100 text-slate-800 px-3.5 py-1 rounded-full border border-slate-200">
+              Restricted Console
+            </span>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight">
+              Admin Portal Access
+            </h1>
+            <p className="text-sm text-slate-600 leading-relaxed max-w-md mx-auto">
+              This section is strictly restricted to designated administrators.
+              <br />
+              <strong className="text-slate-900 font-bold">Primary Super Admin:</strong>{' '}
+              <span className="text-blue-600 font-mono font-bold">{DEFAULT_SUPER_ADMIN}</span>
+            </p>
+          </div>
+
+          {/* Google Sign In Button */}
+          <div className="pt-2">
+            <GoogleSignInButton 
+              buttonText="Sign in with Google as Admin"
+              redirectTo="/admin"
+              className="w-full justify-center"
+            />
+          </div>
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-200"></div>
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-3 text-slate-400 font-bold">Or verify authorized email</span>
+            </div>
+          </div>
+
+          {/* Direct Email Verification Form */}
+          <form onSubmit={handleDirectAdminVerify} className="space-y-3 text-left">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Authorized Admin Email
+              </label>
+              <input 
+                type="email"
+                value={directEmailInput}
+                onChange={(e) => setDirectEmailInput(e.target.value)}
+                placeholder="e.g. argaikwad24@gmail.com"
+                required
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 text-sm font-semibold focus:outline-none focus:border-blue-600 bg-slate-50/50"
+              />
+            </div>
+
+            {directAuthError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs font-bold text-rose-700 flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                <span>{directAuthError}</span>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="w-full py-3.5 px-5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-black transition-all shadow-md cursor-pointer"
+            >
+              Verify & Enter Admin Console
+            </button>
+          </form>
+
+          <div className="pt-2">
+            <Link to="/" className="text-xs font-bold text-slate-500 hover:text-blue-600">
+              ← Return to Public Home
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. GATE 2: LOGGED IN BUT NOT AUTHORIZED
+  if (!isAuthorized) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-16 sm:py-24">
+        <div className="bg-white rounded-3xl border-2 border-rose-200 shadow-2xl p-8 sm:p-12 text-center space-y-6">
+          <div className="w-20 h-20 rounded-full bg-rose-50 text-rose-600 mx-auto flex items-center justify-center border-2 border-rose-200">
+            <ShieldAlert className="w-12 h-12" />
+          </div>
+
+          <div className="space-y-2">
+            <span className="text-xs font-black uppercase tracking-wider bg-rose-100 text-rose-800 px-3.5 py-1 rounded-full border border-rose-200">
+              Access Denied
+            </span>
+            <h1 className="text-3xl font-black text-slate-900">
+              Unauthorized Account
+            </h1>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              You are signed in as: <strong className="text-slate-900 font-bold">{user.google_email}</strong>.
+              <br />
+              This account does not have administrator privileges for Team Tameer.
+            </p>
+          </div>
+
+          <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-600 text-left space-y-1">
+            <p className="font-bold text-slate-800">Need Admin Access?</p>
+            <p>
+              Please sign in with the primary administrator account (<strong className="text-slate-900">{DEFAULT_SUPER_ADMIN}</strong>) or ask them to add your email ({user.google_email}) to the authorized administrators list.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => logout()}
+              className="w-full sm:w-auto px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Switch Account / Sign Out</span>
+            </button>
+            <Link
+              to="/"
+              className="w-full sm:w-auto px-6 py-3 border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl text-sm font-bold text-center"
+            >
+              Go to Home Page
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 3. FULL AUTHORIZED ADMIN PANEL
   const totalCount = schools.length;
   const submittedCount = schools.filter(s => s.registration).length;
 
@@ -146,17 +369,35 @@ export const SimpleAdminPage: React.FC = () => {
               <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
                 Team Tameer Admin Panel
               </h1>
-              <span className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-purple-100 text-purple-800 border border-purple-200">
-                Registrations & Documents
+              <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border ${
+                isSuper 
+                  ? 'bg-amber-100 text-amber-900 border-amber-300' 
+                  : 'bg-purple-100 text-purple-800 border-purple-200'
+              }`}>
+                {isSuper ? '★ Super Admin Console' : 'Admin Console'}
               </span>
             </div>
-            <p className="text-sm sm:text-base text-slate-500 mt-1 font-medium">
-              Real-time portal to view official school delegations and download student & mentor verified credentials.
+            <p className="text-sm sm:text-base text-slate-600 mt-1 font-medium flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Logged in as: <strong className="text-slate-900 font-bold">{user.google_email}</strong></span>
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex flex-wrap items-center gap-3 shrink-0">
+          {/* Super Admin Control Button */}
+          {isSuper && (
+            <button
+              type="button"
+              onClick={() => setShowManageAdmins(!showManageAdmins)}
+              className="px-5 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl text-sm font-extrabold transition-all flex items-center gap-2 shadow-md cursor-pointer"
+            >
+              <Settings className="w-4 h-4" />
+              <span>Manage Admin Access ({adminList.length})</span>
+              {showManageAdmins ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+          )}
+
           <button
             type="button"
             onClick={loadSchools}
@@ -165,6 +406,7 @@ export const SimpleAdminPage: React.FC = () => {
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
           </button>
+          
           <button
             type="button"
             onClick={handleExportCSV}
@@ -173,8 +415,118 @@ export const SimpleAdminPage: React.FC = () => {
             <Download className="w-4 h-4 text-amber-400" />
             <span>Export to CSV</span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => logout()}
+            className="px-4 py-3 border border-slate-300 hover:bg-slate-100 text-slate-600 rounded-2xl text-sm font-bold transition-all cursor-pointer"
+            title="Sign Out"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </div>
+
+      {/* SUPER ADMIN ACCESS CONTROL CARD (Only visible to argaikwad24@gmail.com) */}
+      {isSuper && showManageAdmins && (
+        <div className="bg-gradient-to-br from-slate-900 to-indigo-950 text-white rounded-3xl p-6 sm:p-9 shadow-2xl border-2 border-indigo-700/50 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/15">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-amber-400/20 text-amber-300 flex items-center justify-center border border-amber-400/40">
+                <ShieldCheck className="w-7 h-7" />
+              </div>
+              <div>
+                <h3 className="text-xl sm:text-2xl font-black tracking-tight text-white">
+                  Administrator Access Control
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-300">
+                  As the Super Admin (<strong className="text-amber-300">{DEFAULT_SUPER_ADMIN}</strong>), you can authorize or revoke other admin accounts.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowManageAdmins(false)}
+              className="text-xs text-slate-400 hover:text-white underline cursor-pointer self-start sm:self-center"
+            >
+              Close Panel
+            </button>
+          </div>
+
+          {/* Add Admin Form */}
+          <form onSubmit={handleAddAdmin} className="flex flex-col sm:flex-row gap-3">
+            <input
+              type="email"
+              value={newAdminInput}
+              onChange={(e) => setNewAdminInput(e.target.value)}
+              placeholder="Enter new administrator email address (e.g. colleague@school.edu)"
+              className="flex-1 px-5 py-3.5 rounded-2xl border-2 border-white/20 bg-white/10 text-white placeholder:text-slate-400 text-sm font-semibold focus:outline-none focus:border-amber-400 focus:bg-white/15 transition-all"
+            />
+            <button
+              type="submit"
+              className="px-6 py-3.5 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-2xl text-sm font-black transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer shrink-0"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>Authorize Admin</span>
+            </button>
+          </form>
+
+          {/* Feedback Message */}
+          {adminFeedback && (
+            <div className={`p-4 rounded-2xl text-xs font-bold flex items-center gap-2 ${
+              adminFeedback.isError 
+                ? 'bg-rose-500/20 border border-rose-400 text-rose-200' 
+                : 'bg-emerald-500/20 border border-emerald-400 text-emerald-200'
+            }`}>
+              <span>{adminFeedback.text}</span>
+            </div>
+          )}
+
+          {/* Authorized Admins List */}
+          <div className="space-y-3 pt-2">
+            <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
+              Currently Authorized Administrators ({adminList.length})
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {adminList.map((email) => {
+                const isSuperRecord = email.toLowerCase() === DEFAULT_SUPER_ADMIN.toLowerCase();
+                return (
+                  <div
+                    key={email}
+                    className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between gap-3"
+                  >
+                    <div className="flex items-center gap-3 truncate">
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs ${
+                        isSuperRecord ? 'bg-amber-400 text-slate-950' : 'bg-white/15 text-white'
+                      }`}>
+                        {isSuperRecord ? '★' : '✓'}
+                      </div>
+                      <div className="truncate">
+                        <p className="text-sm font-black text-white truncate">{email}</p>
+                        <p className="text-[10px] text-slate-400 font-medium">
+                          {isSuperRecord ? 'Primary Super Administrator (Owner)' : 'Authorized Administrator'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {!isSuperRecord && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveAdmin(email)}
+                        className="px-3 py-1.5 bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 hover:text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer shrink-0 border border-rose-400/30"
+                        title="Revoke admin access"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Revoke</span>
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* District Filter Cards (Large Stat Cards) */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
