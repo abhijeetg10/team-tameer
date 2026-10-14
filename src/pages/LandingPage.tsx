@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Building2, 
   Users, 
@@ -15,9 +15,22 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { GoogleSignInButton } from '../components/GoogleSignInButton';
+import { isAuthorizedAdmin } from '../lib/adminAuth';
 
 export const LandingPage: React.FC = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  // Once signed in, immediately move forward to the appropriate page!
+  useEffect(() => {
+    if (user) {
+      if (isAuthorizedAdmin(user.google_email)) {
+        navigate('/admin');
+      } else {
+        navigate('/register');
+      }
+    }
+  }, [user, navigate]);
 
   return (
     <div className="space-y-16 sm:space-y-24 pb-20">

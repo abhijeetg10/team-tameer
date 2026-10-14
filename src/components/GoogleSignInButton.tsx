@@ -22,7 +22,7 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
   const handleSignIn = async () => {
     try {
       setSubmitting(true);
-      await loginWithGoogle();
+      await loginWithGoogle(redirectTo);
       if (redirectTo) {
         navigate(redirectTo);
       }
