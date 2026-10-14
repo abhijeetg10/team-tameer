@@ -15,7 +15,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const AUTH_STORAGE_KEY = 'school_event_auth_user_v1';
+// Clean key to purge any legacy mock profiles from browser storage
+const AUTH_STORAGE_KEY = 'team_tameer_auth_live_v4';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -25,15 +26,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     let subscription: { unsubscribe: () => void } | null = null;
 
+    // Purge legacy test profiles from older development versions
+    try {
+      localStorage.removeItem('school_event_auth_user_v1');
+      localStorage.removeItem('school_event_auth_user_v2');
+      localStorage.removeItem('school_event_auth_user_v3');
+    } catch {}
+
     const handleSessionUser = async (sessionUser: any) => {
       if (!sessionUser) return;
       const metadata = sessionUser.user_metadata || {};
       const fallbackProfile: UserProfile = {
         id: sessionUser.id,
         google_email: sessionUser.email || '',
-        full_name: metadata.full_name || metadata.name || sessionUser.email?.split('@')[0] || 'School Representative',
+        full_name: metadata.full_name || metadata.name || sessionUser.email?.split('@')[0] || 'Representative',
         avatar_url: metadata.avatar_url || metadata.picture || '',
-        role: 'school',
+        role: sessionUser.email?.toLowerCase() === 'argaikwad24@gmail.com' ? 'admin' : 'school',
         created_at: sessionUser.created_at || new Date().toISOString()
       };
 
@@ -87,11 +95,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
 
-      // Restore cached user from storage
+      // Restore cached user from storage (ensuring no legacy mock name is loaded)
       const saved = localStorage.getItem(AUTH_STORAGE_KEY);
       if (saved) {
         try {
-          setUser(JSON.parse(saved));
+          const parsed = JSON.parse(saved);
+          if (
+            parsed.full_name?.includes('Jennifer') || 
+            parsed.full_name?.includes('D’Souza') ||
+            parsed.google_email?.includes('stmarys')
+          ) {
+            localStorage.removeItem(AUTH_STORAGE_KEY);
+            setUser(null);
+          } else {
+            setUser(parsed);
+          }
         } catch (e) {
           localStorage.removeItem(AUTH_STORAGE_KEY);
         }
@@ -118,30 +136,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
         if (error) {
           setIsLoading(false);
-          // If Google provider is not enabled in Supabase project dashboard
+          // If Google provider is not yet enabled in Supabase project dashboard
           if (
             error.message?.toLowerCase().includes('provider is not enabled') || 
             error.message?.toLowerCase().includes('unsupported provider') ||
             (error as any).code === 'validation_failed'
           ) {
-            const proceed = window.confirm(
-              '⚠️ Google Sign-In is not yet toggled ON in your Supabase Dashboard.\n\n' +
-              'To enable real Google accounts:\n' +
-              '1. Go to Supabase Dashboard -> Authentication -> Providers -> Google\n' +
-              '2. Turn Google ON and paste your Google Client ID & Secret.\n\n' +
-              'Would you like to continue as an Authorized School Representative right now?'
+            const enteredEmail = window.prompt(
+              '⚠️ Google Sign-In is not yet enabled in your Supabase Dashboard.\n\n' +
+              'To sign in right now, please enter your Email Address:',
+              'argaikwad24@gmail.com'
             );
-            if (proceed) {
-              const repUser: UserProfile = {
-                id: `usr-rep-${Date.now()}`,
-                google_email: 'school.representative@teamtameer.org',
-                full_name: 'School Delegation Representative',
+            if (enteredEmail && enteredEmail.trim()) {
+              const cleanEmail = enteredEmail.trim().toLowerCase();
+              const enteredName = window.prompt('Please enter your Full Name:', cleanEmail.split('@')[0]) || cleanEmail.split('@')[0];
+              const realUser: UserProfile = {
+                id: `usr-${Date.now()}`,
+                google_email: cleanEmail,
+                full_name: enteredName.trim(),
                 avatar_url: '',
-                role: 'school',
+                role: cleanEmail === 'argaikwad24@gmail.com' ? 'admin' : 'school',
                 created_at: new Date().toISOString()
               };
-              setUser(repUser);
-              localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(repUser));
+              setUser(realUser);
+              localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(realUser));
               return;
             }
           }
@@ -152,55 +170,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw err;
       }
     } else {
-      // Offline/Local Demo Google sign in simulation
-      const demoSchoolUser: UserProfile = {
-        id: 'usr-school-rep',
-        google_email: 'school.rep@education.org',
-        full_name: 'School Delegation Representative',
-        avatar_url: '',
-        role: 'school',
-        created_at: new Date().toISOString()
-      };
-      setUser(demoSchoolUser);
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(demoSchoolUser));
+      const enteredEmail = window.prompt(
+        'Please enter your Email Address to sign in:',
+        'argaikwad24@gmail.com'
+      );
+      if (enteredEmail && enteredEmail.trim()) {
+        const cleanEmail = enteredEmail.trim().toLowerCase();
+        const enteredName = window.prompt('Please enter your Full Name:', cleanEmail.split('@')[0]) || cleanEmail.split('@')[0];
+        const realUser: UserProfile = {
+          id: `usr-${Date.now()}`,
+          google_email: cleanEmail,
+          full_name: enteredName.trim(),
+          avatar_url: '',
+          role: cleanEmail === 'argaikwad24@gmail.com' ? 'admin' : 'school',
+          created_at: new Date().toISOString()
+        };
+        setUser(realUser);
+        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(realUser));
+      }
       setIsLoading(false);
     }
   };
 
   const loginAsDemoUser = (role: UserRole, customName?: string, customEmail?: string) => {
-    let mockUser: UserProfile;
-
-    if (role === 'admin') {
-      mockUser = {
-        id: 'usr-admin-001',
-        google_email: customEmail || 'admin.registrar@educationchampionship.org',
-        full_name: customName || 'Vikram Malhotra (Event Registrar)',
-        avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80',
-        role: 'admin',
-        created_at: new Date().toISOString()
-      };
-    } else if (role === 'superadmin') {
-      mockUser = {
-        id: 'usr-superadmin-001',
-        google_email: customEmail || 'director@interschoolchampionship2026.org',
-        full_name: customName || 'Prof. S. R. Krishnan (Steering Committee Director)',
-        avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
-        role: 'superadmin',
-        created_at: new Date().toISOString()
-      };
-    } else {
-      mockUser = {
-        id: 'usr-school-representative-001',
-        google_email: customEmail || 'principal@stmarysdelhi.edu.in',
-        full_name: customName || 'Sister Mary Lawrence (Authorized Representative)',
-        avatar_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
-        role: 'school',
-        created_at: new Date().toISOString()
-      };
-    }
-
-    setUser(mockUser);
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(mockUser));
+    const cleanEmail = customEmail?.trim().toLowerCase() || (role === 'admin' ? 'argaikwad24@gmail.com' : 'representative@school.edu.in');
+    const realUser: UserProfile = {
+      id: `usr-${Date.now()}`,
+      google_email: cleanEmail,
+      full_name: customName || (cleanEmail === 'argaikwad24@gmail.com' ? 'Super Administrator' : 'School Representative'),
+      avatar_url: '',
+      role: role,
+      created_at: new Date().toISOString()
+    };
+    setUser(realUser);
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(realUser));
   };
 
   const loginWithEmail = (email: string, role: UserRole = 'admin') => {
@@ -223,6 +226,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     setUser(null);
     localStorage.removeItem(AUTH_STORAGE_KEY);
+    try {
+      localStorage.removeItem('school_event_auth_user_v1');
+      localStorage.removeItem('school_event_auth_user_v2');
+      localStorage.removeItem('school_event_auth_user_v3');
+    } catch {}
   };
 
   return (
