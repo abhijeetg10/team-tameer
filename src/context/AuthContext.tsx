@@ -136,59 +136,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
         if (error) {
           setIsLoading(false);
-          // If Google provider is not yet enabled in Supabase project dashboard
-          if (
-            error.message?.toLowerCase().includes('provider is not enabled') || 
-            error.message?.toLowerCase().includes('unsupported provider') ||
-            (error as any).code === 'validation_failed'
-          ) {
-            const enteredEmail = window.prompt(
-              '⚠️ Google Sign-In is not yet enabled in your Supabase Dashboard.\n\n' +
-              'To sign in right now, please enter your Email Address:',
-              'argaikwad24@gmail.com'
-            );
-            if (enteredEmail && enteredEmail.trim()) {
-              const cleanEmail = enteredEmail.trim().toLowerCase();
-              const enteredName = window.prompt('Please enter your Full Name:', cleanEmail.split('@')[0]) || cleanEmail.split('@')[0];
-              const realUser: UserProfile = {
-                id: `usr-${Date.now()}`,
-                google_email: cleanEmail,
-                full_name: enteredName.trim(),
-                avatar_url: '',
-                role: cleanEmail === 'argaikwad24@gmail.com' ? 'admin' : 'school',
-                created_at: new Date().toISOString()
-              };
-              setUser(realUser);
-              localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(realUser));
-              return;
-            }
-          }
+          alert('Google Sign-In Error: ' + error.message);
           throw error;
         }
       } catch (err: any) {
         setIsLoading(false);
         throw err;
       }
-    } else {
-      const enteredEmail = window.prompt(
-        'Please enter your Email Address to sign in:',
-        'argaikwad24@gmail.com'
-      );
-      if (enteredEmail && enteredEmail.trim()) {
-        const cleanEmail = enteredEmail.trim().toLowerCase();
-        const enteredName = window.prompt('Please enter your Full Name:', cleanEmail.split('@')[0]) || cleanEmail.split('@')[0];
-        const realUser: UserProfile = {
-          id: `usr-${Date.now()}`,
-          google_email: cleanEmail,
-          full_name: enteredName.trim(),
-          avatar_url: '',
-          role: cleanEmail === 'argaikwad24@gmail.com' ? 'admin' : 'school',
-          created_at: new Date().toISOString()
-        };
-        setUser(realUser);
-        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(realUser));
-      }
-      setIsLoading(false);
     }
   };
 
