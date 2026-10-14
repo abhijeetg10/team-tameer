@@ -50,7 +50,7 @@ export const AdminDashboard: React.FC = () => {
   }, []);
 
   // Compute 7 real-time overview counts
-  const totalParticipatingSchools = masterItems.length || 34; // 34
+  const totalParticipatingSchools = masterItems.length || 36; // 36
   
   // Schools that have actually submitted (Submitted, Under Review, Correction, Approved)
   const fullyRegisteredSchools = masterItems.filter(item => 
@@ -121,7 +121,7 @@ export const AdminDashboard: React.FC = () => {
             Participating Schools Master Console
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Tracking all 34 accredited schools across Kolhapur, Sangli, and Satara districts.
+            Tracking all 36 accredited schools across Kolhapur, Sangli, and Satara districts.
           </p>
         </div>
 
@@ -358,10 +358,10 @@ export const AdminDashboard: React.FC = () => {
                 }}
                 className="px-3 py-1.5 rounded-lg border border-slate-300 text-xs text-slate-800 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
-                <option value="all">All Districts (34 Schools)</option>
+                <option value="all">All Districts (36 Schools)</option>
                 <option value="Kolhapur">Kolhapur (16 Schools)</option>
                 <option value="Sangli">Sangli (12 Schools)</option>
-                <option value="Satara">Satara (6 Schools)</option>
+                <option value="Satara">Satara (8 Schools)</option>
               </select>
             </div>
 

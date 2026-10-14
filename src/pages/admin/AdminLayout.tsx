@@ -15,29 +15,47 @@ import {
   ShieldCheck, 
   Bell, 
   ChevronRight,
-  Database
+  Database,
+  MapPin
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export const AdminLayout: React.FC = () => {
-  const { user, role, logout, isSupabaseLive } = useAuth();
+  const { user, role, logout, isSupabaseLive, loginAsDemoUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Security check: Redirect non-admins
+  // Security check: Redirect non-admins or offer 1-click demo entry
   if (!user || (role !== 'admin' && role !== 'superadmin')) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white p-4">
-        <div className="max-w-md w-full bg-slate-800 p-8 rounded-2xl border border-slate-700 text-center space-y-4">
-          <ShieldAlert className="w-12 h-12 text-rose-500 mx-auto" />
-          <h2 className="text-xl font-bold">Administrative Access Restricted</h2>
-          <p className="text-xs text-slate-400">
-            This administration console is restricted to verified Secretariat Registrars and Event Administrators. Your current role is <strong>{role || 'unauthenticated'}</strong>.
-          </p>
-          <div className="pt-2">
-            <Link to="/login" className="inline-block px-4 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700">
-              Sign In with Authorized Google Admin Account
+        <div className="max-w-md w-full bg-slate-800 p-8 rounded-2xl border border-slate-700 text-center space-y-5 shadow-2xl">
+          <div className="w-14 h-14 rounded-2xl bg-slate-700 flex items-center justify-center mx-auto text-amber-400">
+            <ShieldCheck className="w-8 h-8" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold">Admin Console Access</h2>
+            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+              This administration portal oversees school claims, documents, and reviews. Click below to enter with full administrator privileges.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => {
+                loginAsDemoUser('admin', 'Vikram Malhotra (Registrar)', 'admin.registrar@educationchampionship.org');
+              }}
+              className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
+            >
+              <ShieldCheck className="w-4 h-4 text-white" />
+              <span>Enter Admin Console (1-Click Demo)</span>
+            </button>
+            <Link 
+              to="/" 
+              className="w-full py-2.5 px-4 bg-slate-700/80 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-xl transition-all"
+            >
+              Return to Public Website
             </Link>
           </div>
         </div>
@@ -54,6 +72,7 @@ export const AdminLayout: React.FC = () => {
 
   const navigationItems = [
     { name: 'Overview', path: '/admin', icon: LayoutDashboard },
+    { name: 'District Registrations', path: '/admin/districts', icon: MapPin },
     { name: 'School Registrations', path: '/admin/schools', icon: Building2 },
     { name: 'Students Directory', path: '/admin/students', icon: Users },
     { name: 'Mentors Directory', path: '/admin/mentors', icon: UserCheck },
@@ -71,14 +90,27 @@ export const AdminLayout: React.FC = () => {
     <div className="min-h-screen bg-[#F8FAFC] flex">
       {/* Desktop Fixed Sidebar */}
       <aside className="hidden lg:flex lg:flex-col lg:w-64 bg-slate-900 text-slate-300 border-r border-slate-800 shrink-0">
-        {/* Brand */}
-        <div className="h-16 px-6 flex items-center gap-3 border-b border-slate-800 bg-slate-950">
-          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
-            EVT
+        {/* Brand with Both Logos */}
+        <div className="h-16 px-4 flex items-center gap-2.5 border-b border-slate-800 bg-slate-950">
+          <div className="flex items-center gap-1.5 shrink-0">
+            <img 
+              src="/logo.png" 
+              alt="Team Tameer" 
+              className="w-8 h-8 object-contain rounded-lg bg-white p-0.5 border border-slate-700 shadow-2xs" 
+            />
+            <img 
+              src="/logo2.jpeg" 
+              alt="Event Partner" 
+              className="w-8 h-8 object-contain rounded-lg bg-white p-0.5 border border-slate-700 shadow-2xs" 
+            />
           </div>
-          <div>
-            <span className="font-bold text-sm text-white tracking-tight">Admin Console</span>
-            <span className="block text-[10px] text-slate-500 font-mono">Championship 2026</span>
+          <div className="min-w-0">
+            <span className="font-bold text-xs text-white tracking-tight truncate block">
+              Team Tameer
+            </span>
+            <span className="block text-[10px] text-amber-400 font-mono font-semibold truncate">
+              Admin Console
+            </span>
           </div>
         </div>
 
@@ -115,6 +147,12 @@ export const AdminLayout: React.FC = () => {
           <p className="text-slate-500 text-[10px]">
             {isSupabaseLive ? 'Row-Level Security active' : 'Production fallback ready'}
           </p>
+        </div>
+
+        {/* Developer Credit */}
+        <div className="px-4 py-2 border-t border-slate-800 bg-slate-950/80 text-[10px] text-slate-400 flex items-center justify-between">
+          <span>Dev:</span>
+          <span className="font-bold text-amber-400">RECPRO Rehan Chougule</span>
         </div>
 
         {/* Admin User Footer */}

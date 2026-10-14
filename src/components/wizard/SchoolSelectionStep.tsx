@@ -166,7 +166,7 @@ export const SchoolSelectionStep: React.FC<SchoolSelectionStepProps> = ({
           Select Your School
         </h2>
         <p className="text-xs text-slate-500 mt-1">
-          Choose your district and school to begin your event registration from the 34 officially accredited institutions.
+          Choose your district and school to begin your team registration from the 36 officially accredited institutions.
         </p>
       </div>
 
@@ -187,11 +187,11 @@ export const SchoolSelectionStep: React.FC<SchoolSelectionStepProps> = ({
               <option value="">-- Choose District --</option>
               <option value="Kolhapur">Kolhapur (16 Participating Schools)</option>
               <option value="Sangli">Sangli (12 Participating Schools)</option>
-              <option value="Satara">Satara (6 Participating Schools)</option>
+              <option value="Satara">Satara (8 Participating Schools)</option>
             </select>
           </div>
           <p className="text-[11px] text-slate-500">
-            Official event covers 34 institutions across Kolhapur, Sangli, and Satara.
+            Official event covers 36 institutions across Kolhapur, Sangli, and Satara.
           </p>
         </div>
 

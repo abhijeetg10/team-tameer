@@ -98,7 +98,7 @@ export const AdminReportsPage: React.FC = () => {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Official_Event_Roster_34Schools_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `Team_Tameer_Roster_36Schools_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

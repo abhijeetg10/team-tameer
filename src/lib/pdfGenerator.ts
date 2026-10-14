@@ -25,7 +25,7 @@ export const generateAcknowledgementPDF = (registration: FullSchoolRegistration)
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(16);
-  doc.text('NATIONAL INTERSCHOOL EDUCATIONAL EXCELLENCE 2026', pageWidth / 2, 16, { align: 'center' });
+  doc.text('TEAM TAMEER REGISTRATION 2026', pageWidth / 2, 16, { align: 'center' });
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
@@ -34,7 +34,7 @@ export const generateAcknowledgementPDF = (registration: FullSchoolRegistration)
 
   doc.setFontSize(8);
   doc.setTextColor(148, 163, 184);
-  doc.text('Secretariat: Dr. APJ Abdul Kalam Auditorium, National Education Complex, New Delhi', pageWidth / 2, 32, { align: 'center' });
+  doc.text('Kolhapur • Sangli • Satara Interschool Conclave  |  Developed by RECPRO Rehan Chougule', pageWidth / 2, 32, { align: 'center' });
 
   // 2. Registration ID Badge Box
   doc.setFillColor(255, 255, 255);
@@ -196,7 +196,7 @@ export const generateAcknowledgementPDF = (registration: FullSchoolRegistration)
 
   doc.setFontSize(7);
   doc.setTextColor(148, 163, 184);
-  doc.text(`Generated digitally via portal on ${new Date().toISOString()}`, pageWidth / 2, 288, { align: 'center' });
+  doc.text(`Generated digitally via Team Tameer Portal on ${new Date().toISOString()} • Developer: RECPRO Rehan Chougule`, pageWidth / 2, 288, { align: 'center' });
 
   // Save PDF
   doc.save(`${school.registration_id}_Acknowledgement.pdf`);

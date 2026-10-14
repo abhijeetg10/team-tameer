@@ -282,13 +282,15 @@ INSERT INTO public.participating_schools (school_name, district) VALUES
 ('Chand Urdu School Miraj', 'Sangli'),
 ('Dr. Salim Urdu High School Miraj', 'Sangli'),
 
--- District: Satara (6 Schools)
+-- District: Satara (8 Schools)
 ('Husen Kasam Danekari Anglo Urdu Highschool Karad', 'Satara'),
 ('Anjuman Khairul Islam Urdu High School Satara', 'Satara'),
 ('Shaheen High School Karad', 'Satara'),
 ('Satara Urdu Highschool & Junior College Nagthane', 'Satara'),
 ('Haji Abdul Rajjak Urdu Highschool And Junior College Phaltan', 'Satara'),
-('Madrasa Islamiya Ziya Ul Quran Malkapur', 'Satara')
+('Madrasa Islamiya Ziya Ul Quran Malkapur', 'Satara'),
+('Tanzeem e Waliden Urdu High School Wai satara', 'Satara'),
+('ANJUMAN KHAIRUL ISLAM URDU HIGH SCHOOL MAHABALESHWAR', 'Satara')
 ON CONFLICT (school_name, district) DO NOTHING;
 
 -- Seed Initial Event Settings
@@ -302,12 +304,34 @@ INSERT INTO public.event_settings (
     contact_phone,
     venue
 ) VALUES (
-    'Interschool Educational Excellence Championship 2026',
+    'Team Tameer Registration 2026',
     'November 28, 2026',
     true,
     (now() + INTERVAL '30 days'),
-    34,
-    'events@educationchampionship.org',
-    '+91 (0231) 265-4321 / +91 98220-44550',
-    'Dr. APJ Abdul Kalam Auditorium, South Maharashtra Education Centre'
+    36,
+    '',
+    '',
+    ''
 ) ON CONFLICT DO NOTHING;
+
+-- ==========================================================
+-- Storage Buckets Configuration for Photos & Documents
+-- ==========================================================
+INSERT INTO storage.buckets (id, name, public)
+VALUES 
+    ('school-photos', 'school-photos', true),
+    ('school-documents', 'school-documents', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- Storage RLS Policies
+CREATE POLICY "Public photos viewable" ON storage.objects
+    FOR SELECT USING (bucket_id = 'school-photos');
+
+CREATE POLICY "Photos uploadable by authenticated users" ON storage.objects
+    FOR INSERT WITH CHECK (bucket_id = 'school-photos');
+
+CREATE POLICY "Documents viewable by authenticated users" ON storage.objects
+    FOR SELECT USING (bucket_id = 'school-documents');
+
+CREATE POLICY "Documents uploadable by authenticated users" ON storage.objects
+    FOR INSERT WITH CHECK (bucket_id = 'school-documents');

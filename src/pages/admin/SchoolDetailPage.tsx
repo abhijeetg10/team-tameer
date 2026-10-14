@@ -140,7 +140,7 @@ export const SchoolDetailPage: React.FC = () => {
 
           <div>
             <Button variant="secondary" size="md" onClick={() => navigate('/admin')}>
-              Return to All 34 Schools
+              Return to District Directory (36 Schools)
             </Button>
           </div>
         </div>

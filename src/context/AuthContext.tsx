@@ -20,33 +20,73 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Initialize Auth state
+  // Initialize Auth state & listen to live OAuth state changes
   useEffect(() => {
+    let subscription: { unsubscribe: () => void } | null = null;
+
+    const handleSessionUser = async (sessionUser: any) => {
+      if (!sessionUser) return;
+      const metadata = sessionUser.user_metadata || {};
+      const fallbackProfile: UserProfile = {
+        id: sessionUser.id,
+        google_email: sessionUser.email || '',
+        full_name: metadata.full_name || metadata.name || sessionUser.email?.split('@')[0] || 'School Representative',
+        avatar_url: metadata.avatar_url || metadata.picture || '',
+        role: 'school',
+        created_at: sessionUser.created_at || new Date().toISOString()
+      };
+
+      if (isSupabaseConfigured && supabase) {
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', sessionUser.id)
+            .maybeSingle();
+
+          if (profile) {
+            setUser(profile);
+            localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(profile));
+            return;
+          }
+
+          // Upsert new Google sign-in profile
+          await supabase.from('profiles').upsert([fallbackProfile], { onConflict: 'id' });
+        } catch (e) {
+          console.warn('Profile fetch/upsert failed:', e);
+        }
+      }
+
+      setUser(fallbackProfile);
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(fallbackProfile));
+    };
+
     const initAuth = async () => {
-      // 1. If Supabase configured, check live session
       if (isSupabaseConfigured && supabase) {
         try {
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.user) {
-            // Fetch user profile from database
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .single();
-
-            if (profile) {
-              setUser(profile);
-              setIsLoading(false);
-              return;
-            }
+            await handleSessionUser(session.user);
+            setIsLoading(false);
+            return;
           }
+
+          // Live Auth state change listener (catches redirect back from Google OAuth)
+          const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+            if (session?.user) {
+              await handleSessionUser(session.user);
+            } else if (_event === 'SIGNED_OUT') {
+              setUser(null);
+              localStorage.removeItem(AUTH_STORAGE_KEY);
+            }
+          });
+          subscription = listener.subscription;
         } catch (e) {
           console.warn('Supabase session restore error:', e);
         }
       }
 
-      // 2. Restore cached user from storage
+      // Restore cached user from storage
       const saved = localStorage.getItem(AUTH_STORAGE_KEY);
       if (saved) {
         try {
@@ -59,6 +99,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     initAuth();
+
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, []);
 
   const loginWithGoogle = async () => {

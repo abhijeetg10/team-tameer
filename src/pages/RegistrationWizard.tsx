@@ -15,7 +15,8 @@ import {
   Clock, 
   Check,
   School as SchoolIcon,
-  ShieldCheck
+  ShieldCheck,
+  Zap
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useAuth } from '../context/AuthContext';
@@ -79,6 +80,76 @@ export const RegistrationWizard: React.FC = () => {
   const [declAccuracy, setDeclAccuracy] = useState(false);
   const [declParentConsent, setDeclParentConsent] = useState(false);
   const [declPrivacyNotice, setDeclPrivacyNotice] = useState(false);
+  const [autoFillNotice, setAutoFillNotice] = useState<string | null>(null);
+
+  const handleAutoFillSampleData = () => {
+    setSchool({
+      participating_school_id: 'ps-kol-06',
+      school_name: 'Urdu Anglo High School Shiroli',
+      district: 'Kolhapur',
+      school_code: '27340800301',
+      address: 'National Highway 4, Shiroli MIDC',
+      city: 'Shiroli, Kolhapur',
+      principal_name: 'Dr. Tanveer Ahmed Ansari',
+      school_email: 'principal.shiroli@urdueducation.org',
+      contact_number: '+91 230 246 8899',
+      logo_path: 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=150&auto=format&fit=crop&q=80',
+      is_representative_verified: true,
+      status: 'draft',
+    });
+
+    setMentor({
+      full_name: 'Prof. Farida Begum',
+      phone: '+91 98230 11224',
+      email: 'farida.begum@shiroli.edu',
+      designation: 'Head of Science Department',
+      photo_path: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=80',
+      id_document_path: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80',
+    });
+
+    setStudents([
+      {
+        student_number: 1,
+        full_name: 'Mohammad Rehan Shaikh',
+        class_name: 'Class 10-A',
+        photo_path: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200&auto=format&fit=crop&q=80',
+        school_id_document_path: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&auto=format&fit=crop&q=80',
+        identity_document_type: 'school_id',
+      },
+      {
+        student_number: 2,
+        full_name: 'Zoya Fatima Pathan',
+        class_name: 'Class 10-B',
+        photo_path: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&auto=format&fit=crop&q=80',
+        school_id_document_path: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&auto=format&fit=crop&q=80',
+        identity_document_type: 'school_id',
+      },
+      {
+        student_number: 3,
+        full_name: 'Amanullah Mujawar',
+        class_name: 'Class 9-A',
+        photo_path: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+        school_id_document_path: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&auto=format&fit=crop&q=80',
+        identity_document_type: 'school_id',
+      },
+      {
+        student_number: 4,
+        full_name: 'Mariyam Inamdar',
+        class_name: 'Class 9-B',
+        photo_path: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&auto=format&fit=crop&q=80',
+        school_id_document_path: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&auto=format&fit=crop&q=80',
+        identity_document_type: 'school_id',
+      },
+    ]);
+
+    setDeclAuthorized(true);
+    setDeclAccuracy(true);
+    setDeclParentConsent(true);
+    setDeclPrivacyNotice(true);
+
+    setAutoFillNotice('✨ All 4 steps populated with complete sample team data! You can navigate steps or submit right away.');
+    setTimeout(() => setAutoFillNotice(null), 8000);
+  };
 
   // Load existing draft or registration
   useEffect(() => {
@@ -291,14 +362,23 @@ export const RegistrationWizard: React.FC = () => {
             </p>
           </div>
 
-          {/* Autosave Pill & Manual Save Button */}
-          <div className="flex items-center gap-2 self-start sm:self-auto">
+          {/* Action Buttons: 1-Click Auto Fill & Autosave / Draft */}
+          <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
             {lastSavedTime && (
               <span className="text-xs text-slate-500 flex items-center gap-1 font-mono">
                 <Clock className="w-3.5 h-3.5 text-slate-400" />
                 Draft saved {lastSavedTime}
               </span>
             )}
+            <button
+              type="button"
+              onClick={handleAutoFillSampleData}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-sm transition-all active:scale-[0.98]"
+              title="Populates all 4 steps with sample school, mentor, and 4 student delegates in 1 click"
+            >
+              <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
+              <span>⚡ 1-Click Auto-Fill (Test Mode)</span>
+            </button>
             <Button
               size="sm"
               variant="secondary"
@@ -311,6 +391,23 @@ export const RegistrationWizard: React.FC = () => {
             </Button>
           </div>
         </div>
+
+        {/* Auto Fill Notification Toast Banner */}
+        {autoFillNotice && (
+          <div className="mt-4 p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs text-emerald-900 shadow-2xs animate-in fade-in duration-200">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span className="font-semibold">{autoFillNotice}</span>
+            </div>
+            <button 
+              type="button" 
+              onClick={() => setAutoFillNotice(null)}
+              className="text-emerald-700 hover:text-emerald-950 font-bold px-2 py-0.5 rounded text-[11px]"
+            >
+              ✕ Dismiss
+            </button>
+          </div>
+        )}
 
         {/* Correction Remarks Banner if applicable */}
         {school.status === 'correction_required' && school.correction_remarks && (
@@ -335,10 +432,8 @@ export const RegistrationWizard: React.FC = () => {
                 <button
                   key={s.num}
                   type="button"
-                  onClick={() => {
-                    if (s.num === 1 || isStep1Valid) setCurrentStep(s.num);
-                  }}
-                  className={`flex items-center gap-3 text-left transition-all ${
+                  onClick={() => setCurrentStep(s.num)}
+                  className={`flex items-center gap-3 text-left transition-all cursor-pointer ${
                     isActive ? 'opacity-100' : 'opacity-65 hover:opacity-100'
                   }`}
                 >
