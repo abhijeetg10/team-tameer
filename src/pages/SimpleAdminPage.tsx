@@ -23,7 +23,11 @@ import {
   LogOut,
   Settings,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Edit3,
+  PlusCircle,
+  X,
+  Save
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { GoogleSignInButton } from '../components/GoogleSignInButton';
@@ -36,7 +40,7 @@ import {
   addAuthorizedAdmin, 
   removeAuthorizedAdmin 
 } from '../lib/adminAuth';
-import { District, MasterSchoolListItem } from '../types';
+import { District, MasterSchoolListItem, RegistrationStatus } from '../types';
 
 export const SimpleAdminPage: React.FC = () => {
   const { user, logout, loginWithEmail } = useAuth();
@@ -102,6 +106,180 @@ export const SimpleAdminPage: React.FC = () => {
         setAdminList(getAuthorizedAdmins());
       }
       setTimeout(() => setAdminFeedback(null), 5000);
+    }
+  };
+
+  // Edit & Delete Admin Controls State
+  const [editingItem, setEditingItem] = useState<MasterSchoolListItem | null>(null);
+  const [editUdise, setEditUdise] = useState('');
+  const [editStatus, setEditStatus] = useState<RegistrationStatus>('submitted');
+  const [editContact, setEditContact] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editMentorName, setEditMentorName] = useState('');
+  const [editMentorPhone, setEditMentorPhone] = useState('');
+  const [editMentorEmail, setEditMentorEmail] = useState('');
+  const [editMentorDesignation, setEditMentorDesignation] = useState('');
+  const [editStudents, setEditStudents] = useState<Array<{
+    name: string;
+    className: string;
+    regNo: string;
+  }>>([
+    { name: '', className: '', regNo: '' },
+    { name: '', className: '', regNo: '' },
+    { name: '', className: '', regNo: '' },
+    { name: '', className: '', regNo: '' },
+  ]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [actionMessage, setActionMessage] = useState<{ text: string; isError: boolean } | null>(null);
+
+  const handleOpenEdit = (item: MasterSchoolListItem) => {
+    setEditingItem(item);
+    const reg = item.registration;
+    setEditUdise(reg?.school.school_code || '');
+    setEditStatus(reg?.school.status || 'submitted');
+    setEditContact(reg?.school.contact_number || reg?.mentor.phone || '');
+    setEditEmail(reg?.school.school_email || reg?.mentor.email || '');
+    setEditMentorName(reg?.mentor.full_name || '');
+    setEditMentorPhone(reg?.mentor.phone || '');
+    setEditMentorEmail(reg?.mentor.email || '');
+    setEditMentorDesignation(reg?.mentor.designation || 'Faculty In-Charge');
+
+    const stus = [1, 2, 3, 4].map(num => {
+      const found = reg?.students.find(s => s.student_number === num);
+      return {
+        name: found?.full_name || '',
+        className: found?.class_name || '',
+        regNo: found?.student_registration_number || found?.registration_number || '',
+      };
+    });
+    setEditStudents(stus);
+  };
+
+  const handleCloseEdit = () => {
+    setEditingItem(null);
+  };
+
+  const handleUpdateStudentField = (index: number, field: 'name' | 'className' | 'regNo', val: string) => {
+    const copy = [...editStudents];
+    copy[index] = { ...copy[index], [field]: val };
+    setEditStudents(copy);
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingItem) return;
+
+    if (!editMentorName.trim() || !editMentorPhone.trim()) {
+      alert('Mentor Full Name and Contact Phone are required.');
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      const isAlreadyRegistered = Boolean(editingItem.registration);
+
+      if (isAlreadyRegistered && editingItem.registration) {
+        await api.updateRegistrationByAdmin(
+          editingItem.registration.school.id,
+          {
+            school: {
+              school_code: editUdise.trim(),
+              contact_number: editContact.trim() || editMentorPhone.trim(),
+              school_email: editEmail.trim(),
+            },
+            status: editStatus,
+            mentor: {
+              full_name: editMentorName.trim(),
+              phone: editMentorPhone.trim(),
+              email: editMentorEmail.trim(),
+              designation: editMentorDesignation.trim() || 'In-Charge Faculty',
+            },
+            students: editStudents.map((s, idx) => ({
+              student_number: idx + 1,
+              full_name: s.name.trim(),
+              class_name: s.className.trim(),
+              student_registration_number: s.regNo.trim(),
+            }))
+          },
+          user?.google_email || 'admin@eventportal.org'
+        );
+      } else {
+        // Registering on behalf of school
+        const regId = `GKQ-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+        const schoolData = {
+          participating_school_id: editingItem.participatingSchool.id,
+          school_name: editingItem.participatingSchool.school_name,
+          district: editingItem.participatingSchool.district,
+          school_code: editUdise.trim(),
+          address: '',
+          city: `${editingItem.participatingSchool.district} District`,
+          principal_name: '',
+          school_email: editEmail.trim(),
+          contact_number: editContact.trim() || editMentorPhone.trim(),
+          status: editStatus,
+          registration_id: regId,
+          submitted_at: new Date().toISOString(),
+        };
+
+        const mentorData = {
+          full_name: editMentorName.trim(),
+          phone: editMentorPhone.trim(),
+          email: editMentorEmail.trim(),
+          designation: editMentorDesignation.trim() || 'In-Charge Faculty',
+        };
+
+        const studentsData = editStudents.map((s, idx) => ({
+          student_number: idx + 1,
+          full_name: s.name.trim(),
+          class_name: s.className.trim(),
+          student_registration_number: s.regNo.trim(),
+          identity_document_type: 'school_id' as const,
+        }));
+
+        await api.saveSchoolDraft(
+          user?.id || 'admin-user',
+          schoolData,
+          mentorData,
+          studentsData
+        );
+      }
+
+      setActionMessage({
+        text: `Successfully saved changes for "${editingItem.participatingSchool.school_name}"!`,
+        isError: false
+      });
+      setTimeout(() => setActionMessage(null), 5000);
+      setEditingItem(null);
+      await loadSchools();
+    } catch (err: any) {
+      alert(err.message || 'Failed to update registration.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteRegistration = async (item: MasterSchoolListItem) => {
+    const sName = item.participatingSchool.school_name;
+    const ok = window.confirm(
+      `Are you sure you want to permanently delete the registration data for:\n"${sName}"?\n\nThis will remove mentor info, student delegates, uploaded documents, and reset status back to Not Registered.`
+    );
+    if (!ok) return;
+
+    try {
+      const targetId = item.registration?.school.id || item.participatingSchool.id;
+      const success = await api.deleteRegistrationByAdmin(targetId, user?.google_email || 'admin@eventportal.org');
+      if (success) {
+        setActionMessage({
+          text: `Registration data for "${sName}" was deleted.`,
+          isError: false
+        });
+        setTimeout(() => setActionMessage(null), 5000);
+        await loadSchools();
+      } else {
+        alert('Could not find registration to delete.');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete registration.');
     }
   };
 
@@ -541,6 +719,31 @@ export const SimpleAdminPage: React.FC = () => {
         </div>
       )}
 
+      {/* Action Feedback Banner */}
+      {actionMessage && (
+        <div className={`p-4 rounded-2xl flex items-center justify-between border-2 shadow-sm ${
+          actionMessage.isError
+            ? 'bg-rose-50 border-rose-200 text-rose-800'
+            : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+        }`}>
+          <div className="flex items-center gap-3">
+            {actionMessage.isError ? (
+              <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+            ) : (
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+            )}
+            <p className="font-extrabold text-sm sm:text-base">{actionMessage.text}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActionMessage(null)}
+            className="text-slate-400 hover:text-slate-700 p-1 cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* District Filter Cards (Large Stat Cards) */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
         <button
@@ -688,6 +891,31 @@ export const SimpleAdminPage: React.FC = () => {
                       Not Yet Registered
                     </span>
                   )}
+
+                  {/* ADMIN ACTION BUTTONS: EDIT & DELETE */}
+                  <div className="flex items-center gap-2 pl-2 sm:border-l-2 sm:border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEdit(item)}
+                      title={hasReg ? "Edit Registration Form Data" : "Register / Fill Form Data"}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white border-2 border-blue-200 hover:border-blue-600 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer shadow-2xs"
+                    >
+                      {hasReg ? <Edit3 className="w-3.5 h-3.5" /> : <PlusCircle className="w-3.5 h-3.5" />}
+                      <span>{hasReg ? 'Edit Data' : '+ Fill Form'}</span>
+                    </button>
+
+                    {hasReg && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteRegistration(item)}
+                        title="Delete Registration Data"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border-2 border-rose-200 hover:border-rose-600 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer shadow-2xs"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Delete</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -857,14 +1085,285 @@ export const SimpleAdminPage: React.FC = () => {
                 </div>
               ) : (
                 /* Not registered placeholder */
-                <div className="mt-4 py-4 text-center text-sm text-slate-400 font-semibold italic bg-slate-50/70 rounded-2xl border border-slate-200">
-                  This school has not submitted their registration yet.
+                <div className="mt-4 py-6 text-center bg-slate-50/70 rounded-2xl border border-slate-200 space-y-3">
+                  <p className="text-sm text-slate-500 font-semibold italic">
+                    This school has not submitted their registration yet.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenEdit(item)}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs sm:text-sm font-extrabold shadow-sm hover:shadow transition-all cursor-pointer"
+                  >
+                    <PlusCircle className="w-4 h-4" />
+                    <span>Fill Registration Form for this School</span>
+                  </button>
                 </div>
               )}
             </div>
           );
         })}
       </div>
+
+      {/* EDIT / FILL REGISTRATION MODAL */}
+      {editingItem && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-3xl border-2 border-slate-200 max-w-4xl w-full p-6 sm:p-9 shadow-2xl space-y-6 my-8 max-h-[92vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between pb-4 border-b-2 border-slate-100">
+              <div>
+                <span className="text-xs font-black uppercase tracking-wider text-blue-600 bg-blue-50 px-3 py-1 rounded-lg border border-blue-200">
+                  {editingItem.participatingSchool.district} District
+                </span>
+                <h3 className="text-xl sm:text-2xl font-black text-slate-900 mt-2">
+                  {editingItem.registration ? 'Edit Registration Form' : 'Register Institution (Admin Form)'}
+                </h3>
+                <p className="text-sm text-slate-500 font-semibold mt-0.5">
+                  {editingItem.participatingSchool.school_name}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleCloseEdit}
+                className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-all cursor-pointer"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEdit} className="space-y-6">
+              {/* SECTION 1: INSTITUTION & REGISTRATION DETAILS */}
+              <div className="p-5 sm:p-6 bg-slate-50/80 rounded-2xl border-2 border-slate-200/80 space-y-4">
+                <p className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-blue-600" />
+                  <span>1. Institutional & Status Details</span>
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-xs font-extrabold uppercase text-slate-700 mb-1.5">
+                      School UDISE Number
+                    </label>
+                    <input
+                      type="text"
+                      value={editUdise}
+                      onChange={(e) => setEditUdise(e.target.value)}
+                      placeholder="e.g. 27280100101"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 font-mono text-sm font-semibold focus:outline-none focus:border-blue-600 bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-extrabold uppercase text-slate-700 mb-1.5">
+                      Registration Status
+                    </label>
+                    <select
+                      value={editStatus}
+                      onChange={(e) => setEditStatus(e.target.value as RegistrationStatus)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-bold focus:outline-none focus:border-blue-600 bg-white"
+                    >
+                      <option value="submitted">Submitted (Active)</option>
+                      <option value="approved">Approved</option>
+                      <option value="pending_verification">Pending Verification</option>
+                      <option value="correction_required">Correction Required</option>
+                      <option value="rejected">Rejected</option>
+                      <option value="draft">Draft</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-extrabold uppercase text-slate-700 mb-1.5">
+                      Official Contact Phone
+                    </label>
+                    <input
+                      type="text"
+                      value={editContact}
+                      onChange={(e) => setEditContact(e.target.value)}
+                      placeholder="e.g. +91 98220 12345"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold focus:outline-none focus:border-blue-600 bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-extrabold uppercase text-slate-700 mb-1.5">
+                      Official Email
+                    </label>
+                    <input
+                      type="email"
+                      value={editEmail}
+                      onChange={(e) => setEditEmail(e.target.value)}
+                      placeholder="e.g. school@example.com"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold focus:outline-none focus:border-blue-600 bg-white"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 2: FACULTY MENTOR */}
+              <div className="p-5 sm:p-6 bg-slate-50/80 rounded-2xl border-2 border-slate-200/80 space-y-4">
+                <p className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                  <UserCheck className="w-4 h-4 text-emerald-600" />
+                  <span>2. Faculty Mentor In-Charge</span>
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-xs font-extrabold uppercase text-slate-700 mb-1.5">
+                      Mentor Name <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={editMentorName}
+                      onChange={(e) => setEditMentorName(e.target.value)}
+                      placeholder="Full Name"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold focus:outline-none focus:border-blue-600 bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-extrabold uppercase text-slate-700 mb-1.5">
+                      Designation
+                    </label>
+                    <input
+                      type="text"
+                      value={editMentorDesignation}
+                      onChange={(e) => setEditMentorDesignation(e.target.value)}
+                      placeholder="e.g. Teacher / Coordinator"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold focus:outline-none focus:border-blue-600 bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-extrabold uppercase text-slate-700 mb-1.5">
+                      Phone Number <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={editMentorPhone}
+                      onChange={(e) => setEditMentorPhone(e.target.value)}
+                      placeholder="10-digit mobile"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold focus:outline-none focus:border-blue-600 bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-extrabold uppercase text-slate-700 mb-1.5">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      value={editMentorEmail}
+                      onChange={(e) => setEditMentorEmail(e.target.value)}
+                      placeholder="Email (Optional)"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold focus:outline-none focus:border-blue-600 bg-white"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 3: 4 STUDENT DELEGATES */}
+              <div className="p-5 sm:p-6 bg-slate-50/80 rounded-2xl border-2 border-slate-200/80 space-y-4">
+                <p className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                  <Users className="w-4 h-4 text-purple-600" />
+                  <span>3. Student Delegates (3 Mandatory, 4th Optional)</span>
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {editStudents.map((stu, idx) => {
+                    const isMandatory = idx < 3;
+                    return (
+                      <div
+                        key={idx}
+                        className={`p-4 rounded-xl border-2 space-y-3 bg-white ${
+                          isMandatory ? 'border-slate-200' : 'border-dashed border-slate-300'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                          <span className="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
+                            <span className="w-5 h-5 rounded-md bg-purple-600 text-white flex items-center justify-center text-xs font-bold">
+                              #{idx + 1}
+                            </span>
+                            <span>Student Delegate #{idx + 1}</span>
+                          </span>
+                          <span className={`text-[11px] font-bold px-2 py-0.5 rounded ${
+                            isMandatory ? 'bg-purple-100 text-purple-800' : 'bg-slate-100 text-slate-600'
+                          }`}>
+                            {isMandatory ? 'Mandatory' : 'Optional (4th)'}
+                          </span>
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-bold uppercase text-slate-600 mb-1">
+                            Full Name {isMandatory && <span className="text-rose-500">*</span>}
+                          </label>
+                          <input
+                            type="text"
+                            value={stu.name}
+                            onChange={(e) => handleUpdateStudentField(idx, 'name', e.target.value)}
+                            required={isMandatory}
+                            placeholder={`Student ${idx + 1} Name`}
+                            className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm font-semibold focus:outline-none focus:border-purple-600"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-[11px] font-bold uppercase text-slate-600 mb-1">
+                              Class / Grade {isMandatory && <span className="text-rose-500">*</span>}
+                            </label>
+                            <input
+                              type="text"
+                              value={stu.className}
+                              onChange={(e) => handleUpdateStudentField(idx, 'className', e.target.value)}
+                              required={isMandatory}
+                              placeholder="e.g. 10-A"
+                              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm font-semibold focus:outline-none focus:border-purple-600"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-bold uppercase text-slate-600 mb-1">
+                              Student Reg No.
+                            </label>
+                            <input
+                              type="text"
+                              value={stu.regNo}
+                              onChange={(e) => handleUpdateStudentField(idx, 'regNo', e.target.value)}
+                              placeholder="e.g. REG-01"
+                              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm font-semibold focus:outline-none focus:border-purple-600"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Modal Action Buttons */}
+              <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-4 border-t-2 border-slate-100">
+                <button
+                  type="button"
+                  onClick={handleCloseEdit}
+                  disabled={isSaving}
+                  className="w-full sm:w-auto px-6 py-3 rounded-xl border-2 border-slate-300 text-slate-700 hover:bg-slate-100 font-extrabold text-sm transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-extrabold text-sm shadow-md hover:shadow-lg transition-all cursor-pointer disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{isSaving ? 'Saving Changes...' : 'Save Registration Data'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

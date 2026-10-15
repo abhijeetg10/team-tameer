@@ -831,6 +831,174 @@ export const api = {
   },
 
   /**
+   * Admin: Update registration data (school, mentor, and students)
+   */
+  async updateRegistrationByAdmin(
+    schoolIdOrParticipatingId: string,
+    updated: {
+      school?: Partial<School>;
+      mentor?: Partial<Mentor>;
+      students?: Partial<Student>[];
+      status?: RegistrationStatus;
+    },
+    adminEmail: string = 'admin@eventportal.org'
+  ): Promise<FullSchoolRegistration> {
+    const raw = localStorage.getItem(STORAGE_KEYS.SCHOOLS);
+    const schools: FullSchoolRegistration[] = raw ? JSON.parse(raw) : [];
+    const index = schools.findIndex(
+      s => s.school.id === schoolIdOrParticipatingId || s.school.participating_school_id === schoolIdOrParticipatingId
+    );
+
+    if (index === -1) {
+      throw new Error('Registration record not found.');
+    }
+
+    const current = schools[index];
+    const now = new Date().toISOString();
+
+    const updatedSchool: School = {
+      ...current.school,
+      ...(updated.school || {}),
+      status: updated.status || updated.school?.status || current.school.status,
+      updated_at: now
+    };
+
+    const updatedMentor: Mentor = {
+      ...current.mentor,
+      ...(updated.mentor || {})
+    };
+
+    let updatedStudents = current.students;
+    if (updated.students && updated.students.length > 0) {
+      updatedStudents = [1, 2, 3, 4].map(num => {
+        const existingStu = current.students.find(s => s.student_number === num);
+        const incomingStu = updated.students?.find(s => s.student_number === num);
+        if (!incomingStu) return existingStu || {
+          id: `stu-${updatedSchool.id}-${num}`,
+          school_id: updatedSchool.id,
+          student_number: num,
+          full_name: '',
+          class_name: '',
+          created_at: now
+        };
+        return {
+          id: existingStu?.id || `stu-${updatedSchool.id}-${num}`,
+          school_id: updatedSchool.id,
+          student_number: num,
+          full_name: incomingStu.full_name !== undefined ? incomingStu.full_name : (existingStu?.full_name || ''),
+          class_name: incomingStu.class_name !== undefined ? incomingStu.class_name : (existingStu?.class_name || ''),
+          student_registration_number: incomingStu.student_registration_number !== undefined ? incomingStu.student_registration_number : (existingStu?.student_registration_number || ''),
+          photo_path: incomingStu.photo_path !== undefined ? incomingStu.photo_path : existingStu?.photo_path,
+          school_id_document_path: incomingStu.school_id_document_path !== undefined ? incomingStu.school_id_document_path : existingStu?.school_id_document_path,
+          identity_document_type: incomingStu.identity_document_type || existingStu?.identity_document_type || 'school_id',
+          identity_document_path: incomingStu.identity_document_path !== undefined ? incomingStu.identity_document_path : existingStu?.identity_document_path,
+          created_at: existingStu?.created_at || now
+        };
+      });
+    }
+
+    const updatedReg: FullSchoolRegistration = {
+      school: updatedSchool,
+      mentor: updatedMentor,
+      students: updatedStudents,
+      reviews: current.reviews || []
+    };
+
+    schools[index] = updatedReg;
+    localStorage.setItem(STORAGE_KEYS.SCHOOLS, JSON.stringify(schools));
+
+    // Supabase update if live
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.from('schools').update({
+          school_code: updatedSchool.school_code,
+          contact_number: updatedSchool.contact_number,
+          school_email: updatedSchool.school_email,
+          status: updatedSchool.status,
+          updated_at: now
+        }).eq('id', updatedSchool.id);
+
+        await supabase.from('mentors').update({
+          full_name: updatedMentor.full_name,
+          phone: updatedMentor.phone,
+          email: updatedMentor.email,
+          designation: updatedMentor.designation
+        }).eq('school_id', updatedSchool.id);
+
+        for (const stu of updatedStudents) {
+          await supabase.from('students').upsert({
+            school_id: updatedSchool.id,
+            student_number: stu.student_number,
+            full_name: stu.full_name,
+            class_name: stu.class_name,
+            student_registration_number: stu.student_registration_number
+          }, { onConflict: 'school_id,student_number' });
+        }
+      } catch (err) {
+        console.warn('Supabase admin update sync error:', err);
+      }
+    }
+
+    await this.logAudit({
+      actor_id: 'admin',
+      actor_email: adminEmail,
+      action: 'ADMIN_UPDATED_REGISTRATION',
+      resource_type: 'school',
+      resource_id: updatedSchool.id,
+      details: { school_name: updatedSchool.school_name, status: updatedSchool.status }
+    });
+
+    return updatedReg;
+  },
+
+  /**
+   * Admin: Delete registration record (Resets school back to 'not_registered')
+   */
+  async deleteRegistrationByAdmin(
+    schoolIdOrParticipatingId: string,
+    adminEmail: string = 'admin@eventportal.org'
+  ): Promise<boolean> {
+    const raw = localStorage.getItem(STORAGE_KEYS.SCHOOLS);
+    const schools: FullSchoolRegistration[] = raw ? JSON.parse(raw) : [];
+    const index = schools.findIndex(
+      s => s.school.id === schoolIdOrParticipatingId || s.school.participating_school_id === schoolIdOrParticipatingId
+    );
+
+    if (index === -1) {
+      return false;
+    }
+
+    const removed = schools[index];
+    schools.splice(index, 1);
+    localStorage.setItem(STORAGE_KEYS.SCHOOLS, JSON.stringify(schools));
+
+    // Clear user mapping if present
+    if (removed.school.registered_by_user_id) {
+      localStorage.removeItem(`user_school_${removed.school.registered_by_user_id}`);
+    }
+
+    // Supabase cascade delete if live
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.from('schools').delete().eq('id', removed.school.id);
+      } catch (err) {
+        console.warn('Supabase delete error:', err);
+      }
+    }
+
+    await this.logAudit({
+      actor_id: 'admin',
+      actor_email: adminEmail,
+      action: 'ADMIN_DELETED_REGISTRATION',
+      resource_type: 'school',
+      resource_id: removed.school.id,
+      details: { school_name: removed.school.school_name, registration_id: removed.school.registration_id }
+    });
+
+    return true;
+  },
+
+  /**
    * Reset local demo database to initial seed
    */
   resetDemoData(): void {

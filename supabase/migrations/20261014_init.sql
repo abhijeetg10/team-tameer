@@ -236,12 +236,27 @@ CREATE POLICY "School members can update draft or correction schools" ON public.
         (public.is_school_member(id) AND status IN ('draft', 'correction_required'))
         OR public.is_admin()
     );
+CREATE POLICY "Admins can delete school registrations" ON public.schools
+    FOR DELETE USING (public.is_admin());
 
 -- Mentors & Students Policies
 CREATE POLICY "School members and admins can view mentors" ON public.mentors
     FOR SELECT USING (public.is_school_member(school_id) OR public.is_admin());
+CREATE POLICY "School members and admins can insert mentors" ON public.mentors
+    FOR INSERT WITH CHECK (public.is_school_member(school_id) OR public.is_admin());
+CREATE POLICY "School members and admins can update mentors" ON public.mentors
+    FOR UPDATE USING (public.is_school_member(school_id) OR public.is_admin());
+CREATE POLICY "Admins can delete mentors" ON public.mentors
+    FOR DELETE USING (public.is_admin());
+
 CREATE POLICY "School members and admins can view students" ON public.students
     FOR SELECT USING (public.is_school_member(school_id) OR public.is_admin());
+CREATE POLICY "School members and admins can insert students" ON public.students
+    FOR INSERT WITH CHECK (public.is_school_member(school_id) OR public.is_admin());
+CREATE POLICY "School members and admins can update students" ON public.students
+    FOR UPDATE USING (public.is_school_member(school_id) OR public.is_admin());
+CREATE POLICY "Admins can delete students" ON public.students
+    FOR DELETE USING (public.is_admin());
 
 -- Event Settings Policies
 CREATE POLICY "Everyone can view event settings" ON public.event_settings
