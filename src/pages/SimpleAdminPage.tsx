@@ -163,18 +163,19 @@ export const SimpleAdminPage: React.FC = () => {
     const headers = [
       'District',
       'School Name',
+      'School UDISE Number',
       'Registration ID',
       'Mentor Name',
       'Mentor Phone',
       'Mentor Email',
       'Mentor Designation',
-      'Student 1 Name',
+      'Student 1 Name (Mandatory)',
       'Student 1 Class',
-      'Student 2 Name',
+      'Student 2 Name (Mandatory)',
       'Student 2 Class',
-      'Student 3 Name',
+      'Student 3 Name (Mandatory)',
       'Student 3 Class',
-      'Student 4 Name',
+      'Student 4 Name (Optional)',
       'Student 4 Class',
       'Status'
     ];
@@ -182,6 +183,7 @@ export const SimpleAdminPage: React.FC = () => {
     const rows = filtered.map(item => [
       `"${item.participatingSchool.district}"`,
       `"${item.participatingSchool.school_name}"`,
+      `"${item.registration?.school.school_code || 'N/A'}"`,
       `"${item.registration?.school.registration_id || 'N/A'}"`,
       `"${item.registration?.mentor.full_name || 'N/A'}"`,
       `"${item.registration?.mentor.phone || 'N/A'}"`,
@@ -193,7 +195,7 @@ export const SimpleAdminPage: React.FC = () => {
       `"${item.registration?.students[1]?.class_name || 'N/A'}"`,
       `"${item.registration?.students[2]?.full_name || 'N/A'}"`,
       `"${item.registration?.students[2]?.class_name || 'N/A'}"`,
-      `"${item.registration?.students[3]?.full_name || 'N/A'}"`,
+      `"${item.registration?.students[3]?.full_name || 'Not Nominated'}"`,
       `"${item.registration?.students[3]?.class_name || 'N/A'}"`,
       `"${item.status}"`
     ]);
@@ -202,7 +204,7 @@ export const SimpleAdminPage: React.FC = () => {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Team_Tameer_Registrations_${selectedDistrict}_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `GK_Quiz_Contest_2026_Registrations_${selectedDistrict}_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -319,7 +321,7 @@ export const SimpleAdminPage: React.FC = () => {
             <p className="text-sm text-slate-600 leading-relaxed">
               You are signed in as: <strong className="text-slate-900 font-bold">{user.google_email}</strong>.
               <br />
-              This account does not have administrator privileges for Team Tameer.
+              This account does not have administrator privileges for State-Level GK Quiz Contest 2026.
             </p>
           </div>
 
@@ -367,7 +369,7 @@ export const SimpleAdminPage: React.FC = () => {
           <div>
             <div className="flex flex-wrap items-center gap-2.5">
               <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
-                Team Tameer Admin Panel
+                State-Level GK Quiz Contest 2026 Admin Panel
               </h1>
               <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border ${
                 isSuper 
@@ -660,7 +662,12 @@ export const SimpleAdminPage: React.FC = () => {
                   </h2>
                 </div>
 
-                <div className="flex items-center gap-3 shrink-0">
+                <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                  {school?.school_code && (
+                    <span className="font-mono text-xs sm:text-sm font-bold text-slate-800 bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-xl shadow-2xs">
+                      UDISE: {school.school_code}
+                    </span>
+                  )}
                   {school?.registration_id ? (
                     <span className="font-mono text-sm sm:text-base font-black text-blue-700 bg-blue-50 border-2 border-blue-200 px-4 py-1.5 rounded-xl shadow-2xs">
                       ID: {school.registration_id}
@@ -730,81 +737,103 @@ export const SimpleAdminPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* 4 Student Delegates with Document Download Buttons */}
+                  {/* Student Delegates with Document Download Buttons */}
                   <div className="space-y-3">
                     <p className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-600 flex items-center gap-2">
                       <Users className="w-4 h-4 text-purple-600" />
-                      <span>Registered 4 Student Delegates & Uploaded Documents</span>
+                      <span>Registered Student Delegates (3 Mandatory, 4th Optional) & Uploaded Documents</span>
                     </p>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-                      {studentsList.map((stu, sIdx) => (
-                        <div
-                          key={stu.id || sIdx}
-                          className="p-5 bg-white border-2 border-slate-200 rounded-2xl space-y-3.5 shadow-sm hover:border-purple-300 transition-all"
-                        >
-                          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                            <span className="font-black text-xs text-slate-600 uppercase tracking-wide">
-                              Student #{sIdx + 1}
-                            </span>
-                            <span className="bg-purple-100 text-purple-800 px-2.5 py-0.5 rounded-lg text-xs font-bold">
-                              {stu.class_name || 'Class 10'}
-                            </span>
-                          </div>
+                      {studentsList.map((stu, sIdx) => {
+                        const isMandatory = sIdx < 3;
+                        const isNotNominated = !isMandatory && !stu.full_name;
 
-                          <div className="flex items-center gap-3">
-                            {stu.photo_path ? (
-                              <img
-                                src={stu.photo_path}
-                                alt={stu.full_name}
-                                className="w-12 h-12 rounded-xl object-cover border-2 border-slate-200 shadow-2xs"
-                              />
-                            ) : (
-                              <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-700 border-2 border-purple-100 flex items-center justify-center font-black text-sm">
-                                #{sIdx + 1}
+                        return (
+                          <div
+                            key={stu.id || sIdx}
+                            className={`p-5 bg-white border-2 rounded-2xl space-y-3.5 shadow-sm hover:border-purple-300 transition-all ${
+                              isNotNominated ? 'border-dashed border-slate-300 bg-slate-50/50' : 'border-slate-200'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                              <span className="font-black text-xs text-slate-600 uppercase tracking-wide">
+                                Student #{sIdx + 1}
+                              </span>
+                              <span className={`px-2.5 py-0.5 rounded-lg text-xs font-bold ${
+                                isMandatory ? 'bg-purple-100 text-purple-800' : 'bg-slate-200 text-slate-700'
+                              }`}>
+                                {isMandatory ? (stu.class_name || 'Mandatory') : (stu.class_name || 'Optional 4th')}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                              {stu.photo_path ? (
+                                <img
+                                  src={stu.photo_path}
+                                  alt={stu.full_name}
+                                  className="w-12 h-12 rounded-xl object-cover border-2 border-slate-200 shadow-2xs"
+                                />
+                              ) : (
+                                <div className={`w-12 h-12 rounded-xl border-2 flex items-center justify-center font-black text-sm ${
+                                  isNotNominated
+                                    ? 'bg-slate-100 text-slate-400 border-slate-200'
+                                    : 'bg-purple-50 text-purple-700 border-purple-100'
+                                }`}>
+                                  #{sIdx + 1}
+                                </div>
+                              )}
+                              <div>
+                                <p className={`font-extrabold text-sm sm:text-base leading-snug ${
+                                  isNotNominated ? 'text-slate-400 italic font-medium' : 'text-slate-900'
+                                }`}>
+                                  {stu.full_name || (isMandatory ? 'Student Name' : 'Not Nominated (Optional)')}
+                                </p>
+                                {stu.class_name && (
+                                  <p className="text-xs text-slate-500 font-semibold">{stu.class_name}</p>
+                                )}
                               </div>
-                            )}
-                            <p className="font-extrabold text-slate-900 text-sm sm:text-base leading-snug">
-                              {stu.full_name || 'Student Name'}
-                            </p>
-                          </div>
+                            </div>
 
-                          {/* Student Document Downloads */}
-                          <div className="pt-2 border-t-2 border-slate-100 flex flex-col gap-2">
-                            {stu.photo_path && (
-                              <button
-                                type="button"
-                                onClick={() => handleDownload(stu.photo_path!, `${stu.full_name}_Photo.jpg`)}
-                                className="w-full text-left inline-flex items-center justify-between px-3 py-2 bg-slate-50 hover:bg-blue-50 text-blue-700 rounded-xl text-xs font-bold transition-colors border border-slate-200/80 cursor-pointer"
-                              >
-                                <span className="flex items-center gap-2">
-                                  <ImageIcon className="w-3.5 h-3.5 text-blue-600" />
-                                  <span>Download Photo</span>
+                            {/* Student Document Downloads */}
+                            <div className="pt-2 border-t-2 border-slate-100 flex flex-col gap-2">
+                              {stu.photo_path && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDownload(stu.photo_path!, `${stu.full_name}_Photo.jpg`)}
+                                  className="w-full text-left inline-flex items-center justify-between px-3 py-2 bg-slate-50 hover:bg-blue-50 text-blue-700 rounded-xl text-xs font-bold transition-colors border border-slate-200/80 cursor-pointer"
+                                >
+                                  <span className="flex items-center gap-2">
+                                    <ImageIcon className="w-3.5 h-3.5 text-blue-600" />
+                                    <span>Download Photo</span>
+                                  </span>
+                                  <Download className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+
+                              {stu.school_id_document_path && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDownload(stu.school_id_document_path!, `${stu.full_name}_SchoolID.pdf`)}
+                                  className="w-full text-left inline-flex items-center justify-between px-3 py-2 bg-slate-50 hover:bg-emerald-50 text-emerald-700 rounded-xl text-xs font-bold transition-colors border border-slate-200/80 cursor-pointer"
+                                >
+                                  <span className="flex items-center gap-2">
+                                    <FileText className="w-3.5 h-3.5 text-emerald-600" />
+                                    <span>Download School ID</span>
+                                  </span>
+                                  <Download className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+
+                              {!stu.photo_path && !stu.school_id_document_path && (
+                                <span className="text-xs text-slate-400 italic font-medium py-1">
+                                  {isNotNominated ? 'Optional slot empty' : 'No files uploaded'}
                                 </span>
-                                <Download className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-
-                            {stu.school_id_document_path && (
-                              <button
-                                type="button"
-                                onClick={() => handleDownload(stu.school_id_document_path!, `${stu.full_name}_SchoolID.pdf`)}
-                                className="w-full text-left inline-flex items-center justify-between px-3 py-2 bg-slate-50 hover:bg-emerald-50 text-emerald-700 rounded-xl text-xs font-bold transition-colors border border-slate-200/80 cursor-pointer"
-                              >
-                                <span className="flex items-center gap-2">
-                                  <FileText className="w-3.5 h-3.5 text-emerald-600" />
-                                  <span>Download School ID</span>
-                                </span>
-                                <Download className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-
-                            {!stu.photo_path && !stu.school_id_document_path && (
-                              <span className="text-xs text-slate-400 italic font-medium py-1">No files uploaded</span>
-                            )}
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 </div>

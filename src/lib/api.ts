@@ -60,7 +60,7 @@ export const OFFICIAL_PARTICIPATING_SCHOOLS: ParticipatingSchool[] = [
 
 const INITIAL_EVENT_SETTINGS: EventSettings = {
   id: 'evt-settings-default',
-  event_name: 'Team Tameer Registration 2026',
+  event_name: 'State-Level GK Quiz Contest 2026',
   event_date: 'November 28, 2026',
   registration_open: true,
   registration_deadline: '2026-11-15T23:59:59Z',
@@ -70,7 +70,7 @@ const INITIAL_EVENT_SETTINGS: EventSettings = {
   venue: '',
   rules_summary: [
     'Predefined Institutional Roster: Authorized participating schools across Kolhapur, Sangli, and Satara are eligible to register.',
-    'Each participating institution must register exactly one mentor and four student delegates.',
+    'Each participating institution must register official School UDISE number, exactly one mentor and 3 mandatory student delegates (4th delegate is optional).',
     'Identity documents must be verified and uploaded by the authorized principal or mentor.',
     'Strict Aadhaar Privacy: Raw unmasked Aadhaar numbers must not be submitted. Only masked copies or School IDs.',
     'Registration confirmation passes and photo admit cards will be issued upon administrative review.'

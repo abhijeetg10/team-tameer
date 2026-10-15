@@ -20,7 +20,7 @@ export const Footer: React.FC = () => {
               />
             </div>
             <div>
-              <span className="text-white font-bold text-sm block leading-tight">Team Tameer Registration</span>
+              <span className="text-white font-bold text-sm block leading-tight">State-Level GK Quiz Contest 2026</span>
               <span className="text-[11px] text-slate-500">Kolhapur • Sangli • Satara Schools</span>
             </div>
           </div>
@@ -35,7 +35,7 @@ export const Footer: React.FC = () => {
         </div>
 
         <div className="mt-6 pt-4 border-t border-slate-800/80 text-center sm:text-left text-[11px] text-slate-600">
-          <p>© 2026 Team Tameer Registration. All rights reserved.</p>
+          <p>© 2026 State-Level GK Quiz Contest. All rights reserved.</p>
         </div>
       </div>
     </footer>

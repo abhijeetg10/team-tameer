@@ -28,6 +28,7 @@ export const SimpleRegistrationPage: React.FC = () => {
   
   // School Info
   const [schoolName, setSchoolName] = useState('');
+  const [schoolUdise, setSchoolUdise] = useState('');
 
   // Mentor Info
   const [mentorName, setMentorName] = useState('');
@@ -107,7 +108,7 @@ export const SimpleRegistrationPage: React.FC = () => {
     e.preventDefault();
     setErrorMessage(null);
 
-    // Basic Validation - only District, School Name, Mentor, and 4 Students required
+    // Basic Validation - District, School Name, School UDISE Number, Mentor, and 3 Mandatory Students
     if (!district) {
       setErrorMessage('Please select your district (Kolhapur, Sangli, or Satara).');
       return;
@@ -116,27 +117,39 @@ export const SimpleRegistrationPage: React.FC = () => {
       setErrorMessage('Please select your participating school from the dropdown.');
       return;
     }
+    if (!schoolUdise.trim()) {
+      setErrorMessage('Please enter your School UDISE Number.');
+      return;
+    }
     if (!mentorName.trim() || !mentorPhone.trim()) {
       setErrorMessage('Please enter Faculty Mentor name and contact phone number.');
       return;
     }
 
-    // Check all 4 students have at least names and classes
-    const missingStudents = students.filter(s => !s.name.trim() || !s.className.trim());
-    if (missingStudents.length > 0) {
-      setErrorMessage('Please provide full name and class for all 4 student delegates.');
+    // Check first 3 mandatory students have full name and class
+    const mandatoryStudents = students.slice(0, 3);
+    const missingMandatory = mandatoryStudents.some(s => !s.name.trim() || !s.className.trim());
+    if (missingMandatory) {
+      setErrorMessage('Please provide full name and class for all 3 mandatory student delegates (Student #1, #2, and #3).');
+      return;
+    }
+
+    // 4th student is optional, but if partially filled require both name and class
+    const fourthStudent = students[3];
+    if ((fourthStudent.name.trim() && !fourthStudent.className.trim()) || (!fourthStudent.name.trim() && fourthStudent.className.trim())) {
+      setErrorMessage('For Student Delegate #4 (Optional), please enter both full name and class, or leave both empty.');
       return;
     }
 
     try {
       setIsSubmitting(true);
-      const regId = `TT-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+      const regId = `GKQ-2026-${Math.floor(1000 + Math.random() * 9000)}`;
 
       const schoolData = {
         participating_school_id: selectedSchoolId,
         school_name: schoolName,
         district: district as District,
-        school_code: '',
+        school_code: schoolUdise.trim(),
         address: '',
         city: `${district} District`,
         principal_name: '',
@@ -158,8 +171,8 @@ export const SimpleRegistrationPage: React.FC = () => {
 
       const studentsData: Partial<Student>[] = students.map((s, idx) => ({
         student_number: idx + 1,
-        full_name: s.name,
-        class_name: s.className,
+        full_name: s.name.trim(),
+        class_name: s.className.trim(),
         photo_path: s.photo,
         school_id_document_path: s.idDoc,
         identity_document_type: 'school_id',
@@ -167,7 +180,7 @@ export const SimpleRegistrationPage: React.FC = () => {
 
       // Save draft and submit
       const saved = await api.saveSchoolDraft(user?.id || `user-${Date.now()}`, schoolData, mentorData, studentsData);
-      await api.submitRegistration(saved.school.id, mentorEmail || user?.google_email || 'school@teamtameer.org');
+      await api.submitRegistration(saved.school.id, mentorEmail || user?.google_email || 'school@gkquiz2026.org');
 
       setSubmittedRegId(regId);
       setIsSubmitted(true);
@@ -182,6 +195,7 @@ export const SimpleRegistrationPage: React.FC = () => {
     setDistrict('');
     setSelectedSchoolId('');
     setSchoolName('');
+    setSchoolUdise('');
     setMentorName('');
     setMentorDesignation('');
     setMentorPhone('');
@@ -224,7 +238,7 @@ export const SimpleRegistrationPage: React.FC = () => {
               Sign In to Access Form
             </h2>
             <p className="text-base sm:text-lg text-slate-600 max-w-md mx-auto leading-relaxed">
-              School representatives and faculty mentors must sign in to fill out and submit the official Team Tameer registration form.
+              School representatives and faculty mentors must sign in to fill out and submit the official State-Level GK Quiz Contest 2026 registration form.
             </p>
           </div>
 
@@ -365,7 +379,7 @@ export const SimpleRegistrationPage: React.FC = () => {
               Registration Successfully Submitted!
             </h2>
             <p className="text-base sm:text-lg text-slate-600 mt-2 max-w-lg mx-auto">
-              Your official delegation has been recorded. Thank you for registering <strong>{schoolName}</strong> for Team Tameer 2026.
+              Your official delegation has been recorded. Thank you for registering <strong>{schoolName}</strong> for State-Level GK Quiz Contest 2026.
             </p>
           </div>
 
@@ -436,13 +450,13 @@ export const SimpleRegistrationPage: React.FC = () => {
             <div className="space-y-3">
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/20 text-blue-200 border border-blue-400/30 text-xs sm:text-sm font-bold uppercase tracking-wider">
                 <Sparkles className="w-4 h-4 text-amber-400 fill-amber-400" />
-                <span>Official Interschool Championship 2026</span>
+                <span>State-Level Inter-School Championship 2026</span>
               </div>
               <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.1]">
-                Team Tameer Registration
+                State-Level GK Quiz Contest 2026
               </h1>
               <p className="text-slate-300 text-base sm:text-lg max-w-2xl leading-relaxed">
-                Official delegation portal for Kolhapur, Sangli, and Satara districts. Register your institution's <strong>1 Faculty Mentor</strong> and <strong>4 Student Delegates</strong>.
+                Official delegation portal for Kolhapur, Sangli, and Satara districts. Register your institution's <strong>School UDISE Number</strong>, <strong>1 Faculty Mentor</strong>, and <strong>Student Delegates (3 Mandatory, 4th Optional)</strong>.
               </p>
             </div>
           </div>
@@ -456,11 +470,11 @@ export const SimpleRegistrationPage: React.FC = () => {
           </div>
           <div className="flex items-center gap-2.5">
             <span className="w-3 h-3 rounded-full bg-blue-400"></span>
-            <span>1 Faculty Mentor + 4 Student Delegates</span>
+            <span>1 Faculty Mentor + 3 Mandatory Students (4th Optional)</span>
           </div>
           <div className="flex items-center gap-2.5">
             <span className="w-3 h-3 rounded-full bg-purple-400"></span>
-            <span>Direct Admin Panel Document Access</span>
+            <span>Official UDISE Verification & PDF Admit Pass</span>
           </div>
         </div>
       </div>
@@ -544,6 +558,29 @@ export const SimpleRegistrationPage: React.FC = () => {
                   <span>Includes Tanzeem e Waliden Urdu High School Wai satara & ANJUMAN KHAIRUL ISLAM URDU HIGH SCHOOL MAHABALESHWAR</span>
                 </p>
               )}
+            </div>
+
+            {/* School Udise Number Field */}
+            <div className="md:col-span-2">
+              <label className="block text-sm sm:text-base font-extrabold text-slate-800 uppercase tracking-wider mb-2.5 flex items-center justify-between">
+                <span>
+                  School Udise Number <span className="text-rose-500">*</span>
+                </span>
+                <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200 normal-case">
+                  Government School Code
+                </span>
+              </label>
+              <input
+                type="text"
+                value={schoolUdise}
+                onChange={(e) => setSchoolUdise(e.target.value)}
+                required
+                placeholder="e.g. 27340800301 (Official 11-digit UDISE Number)"
+                className="w-full px-5 py-4 rounded-2xl border-2 border-slate-300 text-base sm:text-lg font-bold text-slate-900 bg-white focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-100 shadow-sm transition-all placeholder:font-normal placeholder:text-slate-400"
+              />
+              <p className="text-xs sm:text-sm text-slate-500 font-medium mt-2">
+                Enter your school's 11-digit Unified District Information System for Education (UDISE) number as per government records.
+              </p>
             </div>
           </div>
         </div>
@@ -672,10 +709,10 @@ export const SimpleRegistrationPage: React.FC = () => {
               </div>
               <div>
                 <h2 className="text-2xl sm:text-3xl font-black text-slate-900">
-                  Student Delegates (Exactly 4 Students)
+                  Student Delegates (3 Mandatory, 4th Optional)
                 </h2>
                 <p className="text-sm sm:text-base text-slate-500 mt-0.5">
-                  Enter student names, classes, and ID proof documents for each student delegate
+                  Student delegates #1, #2, and #3 are mandatory. Student delegate #4 is optional (Reserve).
                 </p>
               </div>
             </div>
@@ -683,97 +720,121 @@ export const SimpleRegistrationPage: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {students.map((student, idx) => (
-              <div 
-                key={idx}
-                className="p-7 sm:p-9 rounded-3xl border-2 border-slate-200/90 bg-white space-y-6 hover:border-purple-300 hover:shadow-lg transition-all shadow-sm"
-              >
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                  <span className="text-base sm:text-lg font-black uppercase tracking-wider text-slate-900 flex items-center gap-2.5">
-                    <span className="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center text-sm font-black shadow-sm">
-                      #{idx + 1}
+            {students.map((student, idx) => {
+              const isMandatory = idx < 3;
+              return (
+                <div 
+                  key={idx}
+                  className={`p-7 sm:p-9 rounded-3xl border-2 space-y-6 transition-all shadow-sm ${
+                    isMandatory
+                      ? 'border-slate-200/90 bg-white hover:border-purple-300 hover:shadow-lg'
+                      : 'border-dashed border-slate-300 bg-slate-50/60 hover:border-purple-300 hover:bg-white hover:shadow-md'
+                  }`}
+                >
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <span className="text-base sm:text-lg font-black uppercase tracking-wider text-slate-900 flex items-center gap-2.5">
+                      <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black shadow-sm ${
+                        isMandatory ? 'bg-purple-600 text-white' : 'bg-slate-700 text-white'
+                      }`}>
+                        #{idx + 1}
+                      </span>
+                      <span>
+                        Student Delegate #{idx + 1}
+                        {!isMandatory && ' (Optional)'}
+                      </span>
                     </span>
-                    <span>Student Delegate #{idx + 1}</span>
-                  </span>
-                  <span className="text-xs sm:text-sm font-extrabold px-3 py-1 rounded-lg bg-purple-100 text-purple-800">
-                    Student
-                  </span>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-base font-bold text-slate-800 mb-2">
-                      Full Name <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={student.name}
-                      onChange={(e) => updateStudent(idx, 'name', e.target.value)}
-                      required
-                      placeholder={`Full Name of Student ${idx + 1}`}
-                      className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-300 text-base font-semibold focus:outline-none focus:border-purple-600 focus:ring-4 focus:ring-purple-100 bg-white transition-all"
-                    />
+                    <span className={`text-xs sm:text-sm font-extrabold px-3 py-1 rounded-lg ${
+                      isMandatory
+                        ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                        : 'bg-slate-200 text-slate-700 border border-slate-300'
+                    }`}>
+                      {isMandatory ? 'Mandatory' : 'Optional (4th)'}
+                    </span>
                   </div>
 
-                  <div>
-                    <label className="block text-base font-bold text-slate-800 mb-2">
-                      Class / Grade <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={student.className}
-                      onChange={(e) => updateStudent(idx, 'className', e.target.value)}
-                      required
-                      placeholder="e.g. Class 9th or Class 10th"
-                      className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-300 text-base font-semibold focus:outline-none focus:border-purple-600 focus:ring-4 focus:ring-purple-100 bg-white transition-all"
-                    />
-                  </div>
-                </div>
-
-                {/* Student Photo & ID Card file upload */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t-2 border-slate-100">
-                  <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-2xl space-y-2">
-                    <label className="block text-sm font-bold text-slate-800">
-                      Student Photo
-                    </label>
-                    {student.photo ? (
-                      <div className="flex items-center gap-2.5 p-2 bg-white rounded-xl border border-slate-200 shadow-2xs">
-                        <img src={student.photo} alt={student.name} className="w-11 h-11 rounded-lg object-cover border" />
-                        <span className="text-xs font-extrabold text-emerald-600">✓ Attached</span>
-                        <button type="button" onClick={() => updateStudent(idx, 'photo', '')} className="text-xs text-rose-500 hover:underline ml-auto font-bold cursor-pointer">Clear</button>
-                      </div>
-                    ) : (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-base font-bold text-slate-800 mb-2">
+                        Full Name {isMandatory ? (
+                          <span className="text-rose-500">*</span>
+                        ) : (
+                          <span className="text-slate-400 text-xs font-normal ml-1">(Optional)</span>
+                        )}
+                      </label>
                       <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleFileUpload(e, (url) => updateStudent(idx, 'photo', url))}
-                        className="block w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-extrabold file:bg-purple-100 file:text-purple-800 hover:file:bg-purple-200 cursor-pointer"
+                        type="text"
+                        value={student.name}
+                        onChange={(e) => updateStudent(idx, 'name', e.target.value)}
+                        required={isMandatory}
+                        placeholder={isMandatory ? `Full Name of Student ${idx + 1}` : 'Full Name of 4th Student (Optional)'}
+                        className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-300 text-base font-semibold focus:outline-none focus:border-purple-600 focus:ring-4 focus:ring-purple-100 bg-white transition-all"
                       />
-                    )}
+                    </div>
+
+                    <div>
+                      <label className="block text-base font-bold text-slate-800 mb-2">
+                        Class / Grade {isMandatory ? (
+                          <span className="text-rose-500">*</span>
+                        ) : (
+                          <span className="text-slate-400 text-xs font-normal ml-1">(Optional)</span>
+                        )}
+                      </label>
+                      <input
+                        type="text"
+                        value={student.className}
+                        onChange={(e) => updateStudent(idx, 'className', e.target.value)}
+                        required={isMandatory}
+                        placeholder={isMandatory ? 'e.g. Class 9th or Class 10th' : 'e.g. Class 9th or Class 10th (Optional)'}
+                        className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-300 text-base font-semibold focus:outline-none focus:border-purple-600 focus:ring-4 focus:ring-purple-100 bg-white transition-all"
+                      />
+                    </div>
                   </div>
 
-                  <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-2xl space-y-2">
-                    <label className="block text-sm font-bold text-slate-800">
-                      School ID / Proof
-                    </label>
-                    {student.idDoc ? (
-                      <div className="flex items-center gap-2.5 p-2 bg-white rounded-xl border border-slate-200 shadow-2xs">
-                        <FileText className="w-8 h-8 text-purple-600" />
-                        <span className="text-xs font-extrabold text-emerald-600">✓ Attached</span>
-                        <button type="button" onClick={() => updateStudent(idx, 'idDoc', '')} className="text-xs text-rose-500 hover:underline ml-auto font-bold cursor-pointer">Clear</button>
-                      </div>
-                    ) : (
-                      <input
-                        type="file"
-                        accept="image/*,application/pdf"
-                        onChange={(e) => handleFileUpload(e, (url) => updateStudent(idx, 'idDoc', url))}
-                        className="block w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-extrabold file:bg-purple-100 file:text-purple-800 hover:file:bg-purple-200 cursor-pointer"
-                      />
-                    )}
+                  {/* Student Photo & ID Card file upload */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t-2 border-slate-100">
+                    <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-2">
+                      <label className="block text-sm font-bold text-slate-800">
+                        Student Photo {!isMandatory && <span className="text-slate-400 text-xs font-normal">(Opt.)</span>}
+                      </label>
+                      {student.photo ? (
+                        <div className="flex items-center gap-2.5 p-2 bg-slate-50 rounded-xl border border-slate-200 shadow-2xs">
+                          <img src={student.photo} alt={student.name || 'Student'} className="w-11 h-11 rounded-lg object-cover border" />
+                          <span className="text-xs font-extrabold text-emerald-600">✓ Attached</span>
+                          <button type="button" onClick={() => updateStudent(idx, 'photo', '')} className="text-xs text-rose-500 hover:underline ml-auto font-bold cursor-pointer">Clear</button>
+                        </div>
+                      ) : (
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleFileUpload(e, (url) => updateStudent(idx, 'photo', url))}
+                          className="block w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-extrabold file:bg-purple-100 file:text-purple-800 hover:file:bg-purple-200 cursor-pointer"
+                        />
+                      )}
+                    </div>
+
+                    <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-2">
+                      <label className="block text-sm font-bold text-slate-800">
+                        School ID / Proof {!isMandatory && <span className="text-slate-400 text-xs font-normal">(Opt.)</span>}
+                      </label>
+                      {student.idDoc ? (
+                        <div className="flex items-center gap-2.5 p-2 bg-slate-50 rounded-xl border border-slate-200 shadow-2xs">
+                          <FileText className="w-8 h-8 text-purple-600" />
+                          <span className="text-xs font-extrabold text-emerald-600">✓ Attached</span>
+                          <button type="button" onClick={() => updateStudent(idx, 'idDoc', '')} className="text-xs text-rose-500 hover:underline ml-auto font-bold cursor-pointer">Clear</button>
+                        </div>
+                      ) : (
+                        <input
+                          type="file"
+                          accept="image/*,application/pdf"
+                          onChange={(e) => handleFileUpload(e, (url) => updateStudent(idx, 'idDoc', url))}
+                          className="block w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-extrabold file:bg-purple-100 file:text-purple-800 hover:file:bg-purple-200 cursor-pointer"
+                        />
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -784,7 +845,7 @@ export const SimpleRegistrationPage: React.FC = () => {
               Delegation Certification
             </p>
             <p className="text-base text-slate-500 max-w-xl leading-relaxed">
-              By submitting, you certify that the above 1 mentor and 4 student delegates are officially authorized by the school administration.
+              By submitting, you certify that the School UDISE Number, designated faculty mentor, and student delegates are officially authorized by the school administration.
             </p>
           </div>
 

@@ -25,7 +25,7 @@ export const generateAcknowledgementPDF = (registration: FullSchoolRegistration)
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(16);
-  doc.text('TEAM TAMEER REGISTRATION 2026', pageWidth / 2, 16, { align: 'center' });
+  doc.text('STATE-LEVEL GK QUIZ CONTEST 2026', pageWidth / 2, 16, { align: 'center' });
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
@@ -122,11 +122,11 @@ export const generateAcknowledgementPDF = (registration: FullSchoolRegistration)
   doc.text(`${mentor.email || 'N/A'}`, 140, y);
   y += 12;
 
-  // 5. Four Student Delegates Table
+  // 5. Four Student Delegates Table (3 Mandatory, 4th Optional)
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
   doc.setTextColor(navy[0], navy[1], navy[2]);
-  doc.text('3. REGISTERED STUDENT DELEGATES (EXACTLY 4)', 14, y);
+  doc.text('3. REGISTERED STUDENT DELEGATES (3 MANDATORY + 1 OPTIONAL)', 14, y);
   y += 5;
   doc.line(14, y, pageWidth - 14, y);
   y += 8;
@@ -140,7 +140,7 @@ export const generateAcknowledgementPDF = (registration: FullSchoolRegistration)
   doc.text('SL', 18, y + 5);
   doc.text('STUDENT FULL NAME', 32, y + 5);
   doc.text('CLASS / GRADE', 110, y + 5);
-  doc.text('VERIFICATION STATUS', 150, y + 5);
+  doc.text('DELEGATE STATUS', 150, y + 5);
   y += 9;
 
   // Table Rows
@@ -155,12 +155,14 @@ export const generateAcknowledgementPDF = (registration: FullSchoolRegistration)
 
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(navy[0], navy[1], navy[2]);
-    doc.text(`${stu.full_name || 'N/A'}`, 32, y + 5);
+    const isOptional = index === 3;
+    const hasName = Boolean(stu.full_name && stu.full_name.trim());
+    doc.text(hasName ? stu.full_name : (isOptional ? 'Not Nominated (Optional)' : 'N/A'), 32, y + 5);
 
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(slate[0], slate[1], slate[2]);
-    doc.text(`${stu.class_name || 'N/A'}`, 110, y + 5);
-    doc.text(`Verified ID on Record`, 150, y + 5);
+    doc.text(hasName ? (stu.class_name || 'N/A') : (isOptional ? '—' : 'N/A'), 110, y + 5);
+    doc.text(hasName ? (isOptional ? 'Optional Delegate (Record)' : 'Mandatory Delegate') : (isOptional ? 'Optional Slot' : 'Pending'), 150, y + 5);
 
     y += 7.5;
   });
@@ -179,7 +181,7 @@ export const generateAcknowledgementPDF = (registration: FullSchoolRegistration)
   doc.setFontSize(7.5);
   doc.setTextColor(slate[0], slate[1], slate[2]);
   doc.text('1. The team must report at the reception counter on November 28, 2026 by 08:30 AM with this acknowledgement copy.', 18, y + 11);
-  doc.text('2. All 4 students and mentor must carry physical original School ID cards for entry accreditation.', 18, y + 15);
+  doc.text('2. All registered students and mentor must carry physical original School ID cards for entry accreditation.', 18, y + 15);
   doc.text('3. In accordance with UIDAI Privacy Guidelines, full Aadhaar copies are strictly prohibited and not retained.', 18, y + 19);
 
   // 7. Footer Stamp / Seal
@@ -196,7 +198,7 @@ export const generateAcknowledgementPDF = (registration: FullSchoolRegistration)
 
   doc.setFontSize(7);
   doc.setTextColor(148, 163, 184);
-  doc.text(`Generated digitally via Team Tameer Portal on ${new Date().toISOString()} • Developer: RECPRO Rehan Chougule`, pageWidth / 2, 288, { align: 'center' });
+  doc.text(`Generated digitally via State-Level GK Quiz Contest 2026 Portal on ${new Date().toISOString()} • Developer: RECPRO Rehan Chougule`, pageWidth / 2, 288, { align: 'center' });
 
   // Save PDF
   doc.save(`${school.registration_id}_Acknowledgement.pdf`);

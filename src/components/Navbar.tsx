@@ -28,7 +28,7 @@ export const Navbar: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <span className="font-black text-base sm:text-xl text-slate-900 tracking-tight leading-tight">
-                Team Tameer Registration
+                State-Level GK Quiz Contest
               </span>
               <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 uppercase">
                 2026

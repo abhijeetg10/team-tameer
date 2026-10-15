@@ -59,13 +59,13 @@ export const LandingPage: React.FC = () => {
 
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-100/80 border border-blue-200 text-blue-900 text-xs sm:text-sm font-bold shadow-2xs">
               <Sparkles className="w-4 h-4 text-amber-500 fill-amber-500" />
-              <span>Official Interschool Championship 2026</span>
+              <span>State-Level Inter-School Championship 2026</span>
             </div>
           </div>
 
           {/* Main Headline - Large Website Typography */}
           <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black text-slate-900 tracking-tight leading-[1.08] max-w-4xl mx-auto">
-            Team Tameer Registration
+            State-Level GK Quiz Contest 2026
           </h1>
 
           {/* Subheading - High Legibility */}
@@ -373,7 +373,7 @@ export const LandingPage: React.FC = () => {
               Ready to Register Your School's Team?
             </h3>
             <p className="text-base text-slate-300 leading-relaxed">
-              Each institution must register exactly <strong>1 Faculty Mentor</strong> and <strong>4 Student Delegates</strong>. No extraneous principal details or postal paperwork required.
+              Each institution registers <strong>1 Faculty Mentor</strong> and <strong>3 Mandatory Student Delegates</strong> (with an optional 4th delegate). Complete with official School UDISE number.
             </p>
           </div>
 
