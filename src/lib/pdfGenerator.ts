@@ -92,7 +92,7 @@ export const generateAcknowledgementPDF = async (registration: FullSchoolRegistr
   // Load all images in parallel: logo, logo3, logo2 stamp, mentor photo, and 4 student photos
   const [logoData, logo3Data, logo2Stamp, mentorPhotoData, ...studentsPhotosData] = await Promise.all([
     ensureBase64Image('/logo.png'),
-    ensureBase64Image('/logo3.jpeg'),
+    ensureBase64Image('/ROLogo.jpeg').then((res) => res || ensureBase64Image('/logo3.jpeg')),
     ensureBase64Image('/logo2.jpeg'),
     ensureBase64Image(mentor.photo_path),
     ...students.map((s) => ensureBase64Image(s.photo_path)),
