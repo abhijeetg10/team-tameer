@@ -19,7 +19,6 @@ import {
   ShieldCheck,
   UserPlus,
   Trash2,
-  Lock,
   LogOut,
   Settings,
   ChevronDown,
@@ -33,7 +32,6 @@ import { useAuth } from '../context/AuthContext';
 import { GoogleSignInButton } from '../components/GoogleSignInButton';
 import { api } from '../lib/api';
 import { 
-  DEFAULT_SUPER_ADMIN, 
   SUPER_ADMIN_EMAILS,
   getAuthorizedAdmins, 
   isAuthorizedAdmin, 

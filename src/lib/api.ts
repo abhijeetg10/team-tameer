@@ -70,7 +70,7 @@ const INITIAL_EVENT_SETTINGS: EventSettings = {
   venue: '',
   rules_summary: [
     'Predefined Institutional Roster: Authorized participating schools across Kolhapur, Sangli, and Satara are eligible to register.',
-    'Each participating institution must register official School UDISE number, exactly one mentor and 3 mandatory student delegates (4th delegate is optional).',
+    'Each participating institution must register official School UDISE number, exactly one mentor, and exactly 3 student delegates.',
     'Identity documents must be verified and uploaded by the authorized principal or mentor.',
     'Strict Aadhaar Privacy: Raw unmasked Aadhaar numbers must not be submitted. Only masked copies or School IDs.',
     'Registration confirmation passes and photo admit cards will be issued upon administrative review.'
