@@ -102,6 +102,7 @@ CREATE TABLE IF NOT EXISTS public.students (
     student_number INT NOT NULL CHECK (student_number BETWEEN 1 AND 4),
     full_name TEXT NOT NULL,
     class_name TEXT NOT NULL,
+    student_registration_number TEXT,
     photo_path TEXT,
     school_id_document_path TEXT,
     identity_document_type TEXT CHECK (identity_document_type IN ('school_id', 'masked_aadhaar', 'passport', 'other_id')),

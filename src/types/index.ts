@@ -79,6 +79,8 @@ export interface Student {
   student_number: number; // 1, 2, 3, or 4
   full_name: string;
   class_name: string;
+  student_registration_number?: string;
+  registration_number?: string;
   photo_path?: string;
   school_id_document_path?: string;
   identity_document_type?: IdentityDocType;

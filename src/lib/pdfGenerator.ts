@@ -157,7 +157,10 @@ export const generateAcknowledgementPDF = (registration: FullSchoolRegistration)
     doc.setTextColor(navy[0], navy[1], navy[2]);
     const isOptional = index === 3;
     const hasName = Boolean(stu.full_name && stu.full_name.trim());
-    doc.text(hasName ? stu.full_name : (isOptional ? 'Not Nominated (Optional)' : 'N/A'), 32, y + 5);
+    const displayName = hasName 
+      ? (stu.student_registration_number ? `${stu.full_name} (${stu.student_registration_number})` : stu.full_name) 
+      : (isOptional ? 'Not Nominated (Optional)' : 'N/A');
+    doc.text(displayName, 32, y + 5);
 
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(slate[0], slate[1], slate[2]);

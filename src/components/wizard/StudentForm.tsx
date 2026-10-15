@@ -78,8 +78,8 @@ export const StudentForm: React.FC<StudentFormProps> = ({
 
       {/* Student Form Body */}
       <div className="p-5 space-y-5">
-        {/* Name and Class */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Name, Class, and Registration Number */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Input
             label="Full Name of Student"
             placeholder="e.g. Aryan Sharma"
@@ -96,6 +96,14 @@ export const StudentForm: React.FC<StudentFormProps> = ({
             value={student.class_name || ''}
             disabled={disabled}
             onChange={(e) => handleFieldChange('class_name', e.target.value)}
+          />
+
+          <Input
+            label="Student Registration Number"
+            placeholder="e.g. REG-01 / Roll No"
+            value={student.student_registration_number || ''}
+            disabled={disabled}
+            onChange={(e) => handleFieldChange('student_registration_number', e.target.value)}
           />
         </div>
 

@@ -137,7 +137,10 @@ export const SimpleAdminPage: React.FC = () => {
       const q = searchQuery.toLowerCase();
       const sName = item.participatingSchool.school_name.toLowerCase();
       const mName = item.registration?.mentor.full_name?.toLowerCase() || '';
-      const stuMatch = item.registration?.students.some(s => s.full_name?.toLowerCase().includes(q));
+      const stuMatch = item.registration?.students.some(s => 
+        s.full_name?.toLowerCase().includes(q) ||
+        s.student_registration_number?.toLowerCase().includes(q)
+      );
       const regId = item.registration?.school.registration_id?.toLowerCase() || '';
 
       return sName.includes(q) || mName.includes(q) || stuMatch || regId.includes(q);
@@ -170,12 +173,16 @@ export const SimpleAdminPage: React.FC = () => {
       'Mentor Email',
       'Mentor Designation',
       'Student 1 Name (Mandatory)',
+      'Student 1 Reg No',
       'Student 1 Class',
       'Student 2 Name (Mandatory)',
+      'Student 2 Reg No',
       'Student 2 Class',
       'Student 3 Name (Mandatory)',
+      'Student 3 Reg No',
       'Student 3 Class',
       'Student 4 Name (Optional)',
+      'Student 4 Reg No',
       'Student 4 Class',
       'Status'
     ];
@@ -190,12 +197,16 @@ export const SimpleAdminPage: React.FC = () => {
       `"${item.registration?.mentor.email || 'N/A'}"`,
       `"${item.registration?.mentor.designation || 'N/A'}"`,
       `"${item.registration?.students[0]?.full_name || 'N/A'}"`,
+      `"${item.registration?.students[0]?.student_registration_number || 'N/A'}"`,
       `"${item.registration?.students[0]?.class_name || 'N/A'}"`,
       `"${item.registration?.students[1]?.full_name || 'N/A'}"`,
+      `"${item.registration?.students[1]?.student_registration_number || 'N/A'}"`,
       `"${item.registration?.students[1]?.class_name || 'N/A'}"`,
       `"${item.registration?.students[2]?.full_name || 'N/A'}"`,
+      `"${item.registration?.students[2]?.student_registration_number || 'N/A'}"`,
       `"${item.registration?.students[2]?.class_name || 'N/A'}"`,
       `"${item.registration?.students[3]?.full_name || 'Not Nominated'}"`,
+      `"${item.registration?.students[3]?.student_registration_number || 'N/A'}"`,
       `"${item.registration?.students[3]?.class_name || 'N/A'}"`,
       `"${item.status}"`
     ]);
@@ -789,9 +800,16 @@ export const SimpleAdminPage: React.FC = () => {
                                 }`}>
                                   {stu.full_name || (isMandatory ? 'Student Name' : 'Not Nominated (Optional)')}
                                 </p>
-                                {stu.class_name && (
-                                  <p className="text-xs text-slate-500 font-semibold">{stu.class_name}</p>
-                                )}
+                                <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                                  {stu.student_registration_number && (
+                                    <span className="text-[11px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                                      Reg: {stu.student_registration_number}
+                                    </span>
+                                  )}
+                                  {stu.class_name && (
+                                    <p className="text-xs text-slate-500 font-semibold">{stu.class_name}</p>
+                                  )}
+                                </div>
                               </div>
                             </div>
 

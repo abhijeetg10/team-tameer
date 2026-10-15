@@ -42,13 +42,14 @@ export const SimpleRegistrationPage: React.FC = () => {
   const [students, setStudents] = useState<Array<{
     name: string;
     className: string;
+    studentRegistrationNumber: string;
     photo: string;
     idDoc: string;
   }>>([
-    { name: '', className: '', photo: '', idDoc: '' },
-    { name: '', className: '', photo: '', idDoc: '' },
-    { name: '', className: '', photo: '', idDoc: '' },
-    { name: '', className: '', photo: '', idDoc: '' },
+    { name: '', className: '', studentRegistrationNumber: '', photo: '', idDoc: '' },
+    { name: '', className: '', studentRegistrationNumber: '', photo: '', idDoc: '' },
+    { name: '', className: '', studentRegistrationNumber: '', photo: '', idDoc: '' },
+    { name: '', className: '', studentRegistrationNumber: '', photo: '', idDoc: '' },
   ]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -98,7 +99,11 @@ export const SimpleRegistrationPage: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
-  const updateStudent = (index: number, field: 'name' | 'className' | 'photo' | 'idDoc', val: string) => {
+  const updateStudent = (
+    index: number,
+    field: 'name' | 'className' | 'studentRegistrationNumber' | 'photo' | 'idDoc',
+    val: string
+  ) => {
     const copy = [...students];
     copy[index] = { ...copy[index], [field]: val };
     setStudents(copy);
@@ -173,6 +178,7 @@ export const SimpleRegistrationPage: React.FC = () => {
         student_number: idx + 1,
         full_name: s.name.trim(),
         class_name: s.className.trim(),
+        student_registration_number: s.studentRegistrationNumber.trim(),
         photo_path: s.photo,
         school_id_document_path: s.idDoc,
         identity_document_type: 'school_id',
@@ -203,10 +209,10 @@ export const SimpleRegistrationPage: React.FC = () => {
     setMentorPhoto('');
     setMentorIdDoc('');
     setStudents([
-      { name: '', className: '', photo: '', idDoc: '' },
-      { name: '', className: '', photo: '', idDoc: '' },
-      { name: '', className: '', photo: '', idDoc: '' },
-      { name: '', className: '', photo: '', idDoc: '' },
+      { name: '', className: '', studentRegistrationNumber: '', photo: '', idDoc: '' },
+      { name: '', className: '', studentRegistrationNumber: '', photo: '', idDoc: '' },
+      { name: '', className: '', studentRegistrationNumber: '', photo: '', idDoc: '' },
+      { name: '', className: '', studentRegistrationNumber: '', photo: '', idDoc: '' },
     ]);
     setIsSubmitted(false);
     setSubmittedRegId('');
@@ -771,22 +777,37 @@ export const SimpleRegistrationPage: React.FC = () => {
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-base font-bold text-slate-800 mb-2">
-                        Class / Grade {isMandatory ? (
-                          <span className="text-rose-500">*</span>
-                        ) : (
-                          <span className="text-slate-400 text-xs font-normal ml-1">(Optional)</span>
-                        )}
-                      </label>
-                      <input
-                        type="text"
-                        value={student.className}
-                        onChange={(e) => updateStudent(idx, 'className', e.target.value)}
-                        required={isMandatory}
-                        placeholder={isMandatory ? 'e.g. Class 9th or Class 10th' : 'e.g. Class 9th or Class 10th (Optional)'}
-                        className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-300 text-base font-semibold focus:outline-none focus:border-purple-600 focus:ring-4 focus:ring-purple-100 bg-white transition-all"
-                      />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-base font-bold text-slate-800 mb-2">
+                          Class / Grade {isMandatory ? (
+                            <span className="text-rose-500">*</span>
+                          ) : (
+                            <span className="text-slate-400 text-xs font-normal ml-1">(Optional)</span>
+                          )}
+                        </label>
+                        <input
+                          type="text"
+                          value={student.className}
+                          onChange={(e) => updateStudent(idx, 'className', e.target.value)}
+                          required={isMandatory}
+                          placeholder={isMandatory ? 'e.g. Class 9th or Class 10th' : 'e.g. Class 9th or Class 10th (Optional)'}
+                          className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-300 text-base font-semibold focus:outline-none focus:border-purple-600 focus:ring-4 focus:ring-purple-100 bg-white transition-all"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-base font-bold text-slate-800 mb-2">
+                          Student Reg No. <span className="text-slate-400 text-xs font-normal ml-1">(Roll / Reg ID)</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={student.studentRegistrationNumber}
+                          onChange={(e) => updateStudent(idx, 'studentRegistrationNumber', e.target.value)}
+                          placeholder={isMandatory ? `e.g. REG-0${idx + 1} / Roll No` : 'Registration No (Optional)'}
+                          className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-300 text-base font-semibold focus:outline-none focus:border-purple-600 focus:ring-4 focus:ring-purple-100 bg-white transition-all"
+                        />
+                      </div>
                     </div>
                   </div>
 

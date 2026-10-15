@@ -69,10 +69,10 @@ export const RegistrationWizard: React.FC = () => {
   });
 
   const [students, setStudents] = useState<Partial<Student>[]>([
-    { student_number: 1, full_name: '', class_name: '', photo_path: '', school_id_document_path: '', identity_document_type: 'school_id' },
-    { student_number: 2, full_name: '', class_name: '', photo_path: '', school_id_document_path: '', identity_document_type: 'school_id' },
-    { student_number: 3, full_name: '', class_name: '', photo_path: '', school_id_document_path: '', identity_document_type: 'school_id' },
-    { student_number: 4, full_name: '', class_name: '', photo_path: '', school_id_document_path: '', identity_document_type: 'school_id' },
+    { student_number: 1, full_name: '', class_name: '', student_registration_number: '', photo_path: '', school_id_document_path: '', identity_document_type: 'school_id' },
+    { student_number: 2, full_name: '', class_name: '', student_registration_number: '', photo_path: '', school_id_document_path: '', identity_document_type: 'school_id' },
+    { student_number: 3, full_name: '', class_name: '', student_registration_number: '', photo_path: '', school_id_document_path: '', identity_document_type: 'school_id' },
+    { student_number: 4, full_name: '', class_name: '', student_registration_number: '', photo_path: '', school_id_document_path: '', identity_document_type: 'school_id' },
   ]);
 
   // Step 4 Mandatory Declarations
