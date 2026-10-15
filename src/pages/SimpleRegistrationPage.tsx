@@ -182,6 +182,7 @@ export const SimpleRegistrationPage: React.FC = () => {
         address: '',
         city: (district as District) || '',
         principal_name: principalName.trim(),
+        principal_phone: principalPhone.trim(),
         school_email: mentorEmail || user?.google_email || '',
         contact_number: principalPhone.trim() || mentorPhone || '',
         status: 'submitted' as const,

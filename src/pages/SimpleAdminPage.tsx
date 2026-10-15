@@ -80,6 +80,17 @@ export const SimpleAdminPage: React.FC = () => {
     }
   }, [user]);
 
+  // Real-time synchronization across browser tabs and windows
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (!e.key || e.key.includes('school_event_schools')) {
+        loadSchools();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   // Authorization checks
   const isAuthorized = Boolean(user && isAuthorizedAdmin(user.google_email));
   const isSuper = Boolean(user && isSuperAdmin(user.google_email));
@@ -140,7 +151,7 @@ export const SimpleAdminPage: React.FC = () => {
     setEditUdise(reg?.school.school_code || '');
     setEditStatus(reg?.school.status || 'submitted');
     setEditPrincipalName(reg?.school.principal_name || '');
-    setEditPrincipalPhone(reg?.school.contact_number || '');
+    setEditPrincipalPhone((reg?.school as any)?.principal_phone || reg?.school.contact_number || '');
     setEditContact(reg?.school.contact_number || reg?.mentor.phone || '');
     setEditEmail(reg?.school.school_email || reg?.mentor.email || '');
     setEditMentorName(reg?.mentor.full_name || '');
@@ -149,11 +160,11 @@ export const SimpleAdminPage: React.FC = () => {
     setEditMentorDesignation(reg?.mentor.designation || 'Faculty In-Charge');
 
     const stus = [1, 2, 3].map(num => {
-      const found = reg?.students.find(s => s.student_number === num);
+      const found = reg?.students?.find(s => s.student_number === num);
       return {
         name: found?.full_name || '',
         className: found?.class_name || '',
-        regNo: found?.student_registration_number || found?.registration_number || '',
+        regNo: found?.student_registration_number || (found as any)?.registration_number || '',
       };
     });
     setEditStudents(stus);
@@ -189,6 +200,7 @@ export const SimpleAdminPage: React.FC = () => {
             school: {
               school_code: editUdise.trim(),
               principal_name: editPrincipalName.trim(),
+              principal_phone: editPrincipalPhone.trim(),
               contact_number: editPrincipalPhone.trim() || editContact.trim() || editMentorPhone.trim(),
               school_email: editEmail.trim(),
             },
@@ -219,6 +231,7 @@ export const SimpleAdminPage: React.FC = () => {
           address: '',
           city: editingItem.participatingSchool.district,
           principal_name: editPrincipalName.trim(),
+          principal_phone: editPrincipalPhone.trim(),
           school_email: editEmail.trim(),
           contact_number: editPrincipalPhone.trim() || editContact.trim() || editMentorPhone.trim(),
           status: editStatus,
@@ -566,6 +579,15 @@ export const SimpleAdminPage: React.FC = () => {
   const totalCount = schools.length;
   const submittedCount = schools.filter(s => s.registration).length;
 
+  const kolhapurSchools = schools.filter(s => s.participatingSchool.district === 'Kolhapur');
+  const kolhapurSubmitted = kolhapurSchools.filter(s => s.registration).length;
+
+  const sangliSchools = schools.filter(s => s.participatingSchool.district === 'Sangli');
+  const sangliSubmitted = sangliSchools.filter(s => s.registration).length;
+
+  const sataraSchools = schools.filter(s => s.participatingSchool.district === 'Satara');
+  const sataraSubmitted = sataraSchools.filter(s => s.registration).length;
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
       {/* Top Header Card */}
@@ -774,29 +796,36 @@ export const SimpleAdminPage: React.FC = () => {
         </div>
       )}
 
-      {/* District Filter Cards (Large Stat Cards) */}
+      {/* District Filter Cards (Large Interactive Metric Cards) */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
         <button
           type="button"
           onClick={() => setSelectedDistrict('all')}
-          className={`p-5 sm:p-7 rounded-3xl border-2 text-left transition-all cursor-pointer ${
+          className={`p-5 sm:p-7 rounded-3xl border-2 text-left transition-all cursor-pointer relative overflow-hidden ${
             selectedDistrict === 'all'
               ? 'bg-slate-900 text-white border-slate-900 shadow-xl scale-[1.02]'
               : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700 shadow-sm'
           }`}
         >
           <div className="flex items-center justify-between text-sm font-bold">
-            <span>All Districts</span>
+            <span>All 3 Districts</span>
             <Building2 className="w-5 h-5 opacity-70" />
           </div>
-          <p className="text-3xl sm:text-4xl font-black mt-2 tracking-tight">36</p>
-          <p className="text-xs sm:text-sm font-semibold opacity-75 mt-0.5">{submittedCount} submitted</p>
+          <p className="text-3xl sm:text-4xl font-black mt-2 tracking-tight">{totalCount || 36}</p>
+          <div className="mt-2 flex items-center gap-2">
+            <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${
+              selectedDistrict === 'all' ? 'bg-emerald-500/30 text-emerald-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+            }`}>
+              {submittedCount} Submitted
+            </span>
+            <span className="text-xs opacity-70 font-semibold">{totalCount - submittedCount} Pending</span>
+          </div>
         </button>
 
         <button
           type="button"
           onClick={() => setSelectedDistrict('Kolhapur')}
-          className={`p-5 sm:p-7 rounded-3xl border-2 text-left transition-all cursor-pointer ${
+          className={`p-5 sm:p-7 rounded-3xl border-2 text-left transition-all cursor-pointer relative overflow-hidden ${
             selectedDistrict === 'Kolhapur'
               ? 'bg-blue-600 text-white border-blue-600 shadow-xl scale-[1.02]'
               : 'bg-white hover:bg-blue-50/50 border-slate-200 text-slate-700 shadow-sm'
@@ -807,13 +836,19 @@ export const SimpleAdminPage: React.FC = () => {
             <MapPin className="w-5 h-5 opacity-70" />
           </div>
           <p className="text-3xl sm:text-4xl font-black mt-2 tracking-tight">16</p>
-          <p className="text-xs sm:text-sm font-semibold opacity-75 mt-0.5">Schools roster</p>
+          <div className="mt-2 flex items-center gap-2">
+            <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${
+              selectedDistrict === 'Kolhapur' ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-700 border border-blue-200'
+            }`}>
+              {kolhapurSubmitted} / 16 Registered
+            </span>
+          </div>
         </button>
 
         <button
           type="button"
           onClick={() => setSelectedDistrict('Sangli')}
-          className={`p-5 sm:p-7 rounded-3xl border-2 text-left transition-all cursor-pointer ${
+          className={`p-5 sm:p-7 rounded-3xl border-2 text-left transition-all cursor-pointer relative overflow-hidden ${
             selectedDistrict === 'Sangli'
               ? 'bg-emerald-600 text-white border-emerald-600 shadow-xl scale-[1.02]'
               : 'bg-white hover:bg-emerald-50/50 border-slate-200 text-slate-700 shadow-sm'
@@ -824,13 +859,19 @@ export const SimpleAdminPage: React.FC = () => {
             <MapPin className="w-5 h-5 opacity-70" />
           </div>
           <p className="text-3xl sm:text-4xl font-black mt-2 tracking-tight">12</p>
-          <p className="text-xs sm:text-sm font-semibold opacity-75 mt-0.5">Schools roster</p>
+          <div className="mt-2 flex items-center gap-2">
+            <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${
+              selectedDistrict === 'Sangli' ? 'bg-white/20 text-white' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+            }`}>
+              {sangliSubmitted} / 12 Registered
+            </span>
+          </div>
         </button>
 
         <button
           type="button"
           onClick={() => setSelectedDistrict('Satara')}
-          className={`p-5 sm:p-7 rounded-3xl border-2 text-left transition-all cursor-pointer ${
+          className={`p-5 sm:p-7 rounded-3xl border-2 text-left transition-all cursor-pointer relative overflow-hidden ${
             selectedDistrict === 'Satara'
               ? 'bg-purple-600 text-white border-purple-600 shadow-xl scale-[1.02]'
               : 'bg-white hover:bg-purple-50/50 border-slate-200 text-slate-700 shadow-sm'
@@ -844,7 +885,13 @@ export const SimpleAdminPage: React.FC = () => {
             <MapPin className="w-5 h-5 opacity-70" />
           </div>
           <p className="text-3xl sm:text-4xl font-black mt-2 tracking-tight">8</p>
-          <p className="text-xs sm:text-sm font-semibold opacity-75 mt-0.5">Includes Wai & Mahabaleshwar</p>
+          <div className="mt-2 flex items-center gap-2">
+            <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${
+              selectedDistrict === 'Satara' ? 'bg-white/20 text-white' : 'bg-purple-50 text-purple-700 border border-purple-200'
+            }`}>
+              {sataraSubmitted} / 8 Registered
+            </span>
+          </div>
         </button>
       </div>
 
@@ -964,6 +1011,40 @@ export const SimpleAdminPage: React.FC = () => {
               {hasReg && school && mentor ? (
                 /* Submitted Details */
                 <div className="mt-6 space-y-6">
+                  {/* Institutional Leadership & Principal Information */}
+                  <div className="p-4 sm:p-5 bg-gradient-to-r from-blue-50/70 via-indigo-50/40 to-slate-50 rounded-2xl border border-blue-100/90 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-11 h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black text-sm shrink-0 shadow-2xs">
+                        <Building2 className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-blue-700">Principal / Institutional Head</p>
+                        <p className="text-base sm:text-lg font-black text-slate-900">{school.principal_name || 'Principal / School Head'}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2.5 text-xs sm:text-sm font-bold">
+                      {Boolean((school as any).principal_phone || school.contact_number) && (
+                        <a
+                          href={`tel:${(school as any).principal_phone || school.contact_number}`}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-blue-200 text-blue-900 hover:bg-blue-50 transition-all shadow-2xs font-extrabold"
+                        >
+                          <Phone className="w-4 h-4 text-emerald-600" />
+                          <span>Principal Phone: {(school as any).principal_phone || school.contact_number}</span>
+                        </a>
+                      )}
+                      {school.school_email && (
+                        <a
+                          href={`mailto:${school.school_email}`}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-all shadow-2xs font-semibold"
+                        >
+                          <Mail className="w-4 h-4 text-slate-500" />
+                          <span>{school.school_email}</span>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Faculty Mentor Information & Document Downloads */}
                   <div className="p-5 sm:p-7 bg-slate-50/90 rounded-2xl border-2 border-slate-200/90 space-y-4">
                     <div className="flex items-center justify-between pb-2 border-b border-slate-200/60">
@@ -1123,7 +1204,7 @@ export const SimpleAdminPage: React.FC = () => {
                           Complete Official Registration Form & Delegate Pass (PDF)
                         </p>
                         <p className="text-xs text-slate-600 font-medium mt-0.5">
-                          Official A4 PDF with institution details, faculty mentor credentials, and 4 student delegates with registration numbers.
+                          Official A4 PDF with institution details, faculty mentor credentials, and 3 student delegates with registration numbers.
                         </p>
                       </div>
                     </div>

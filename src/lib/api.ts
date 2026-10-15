@@ -191,7 +191,11 @@ export const api = {
     const raw = localStorage.getItem(STORAGE_KEYS.SCHOOLS);
     const schools: FullSchoolRegistration[] = raw ? JSON.parse(raw) : [];
 
-    const existing = schools.find(s => s.school.participating_school_id === participatingSchoolId);
+    const existing = schools.find(s => 
+      s.school.participating_school_id === participatingSchoolId ||
+      (s.school.school_name && participatingSchoolId && 
+       s.school.school_name.trim().toLowerCase() === participatingSchoolId.trim().toLowerCase())
+    );
     if (!existing) {
       return { isClaimed: false, isClaimedByCurrentUser: false };
     }
@@ -208,7 +212,7 @@ export const api = {
   },
 
   /**
-   * Get all 34 participating schools merged with their registration status (For Admin Directory)
+   * Get all 36 participating schools merged with their registration status (For Admin Directory)
    */
   async getAllParticipatingSchoolsWithStatus(): Promise<MasterSchoolListItem[]> {
     const masterSchools = await this.getParticipatingSchools();
@@ -216,7 +220,11 @@ export const api = {
     const registrations: FullSchoolRegistration[] = raw ? JSON.parse(raw) : [];
 
     return masterSchools.map(ps => {
-      const reg = registrations.find(r => r.school.participating_school_id === ps.id);
+      const reg = registrations.find(r => 
+        r.school.participating_school_id === ps.id ||
+        (r.school.school_name && ps.school_name && 
+         r.school.school_name.trim().toLowerCase() === ps.school_name.trim().toLowerCase())
+      );
       return {
         participatingSchool: ps,
         registration: reg || null,
@@ -309,53 +317,53 @@ export const api = {
     mentorData: Partial<Mentor>,
     studentsData: Partial<Student>[]
   ): Promise<FullSchoolRegistration> {
-    if (!schoolData.participating_school_id) {
+    if (!schoolData.participating_school_id && !schoolData.school_name) {
       throw new Error('Please select an official participating school from the list.');
     }
 
     // Verify master school exists
-    const masterSchool = await this.getParticipatingSchoolById(schoolData.participating_school_id);
-    if (!masterSchool) {
-      throw new Error('Selected school does not exist in the official participating schools directory.');
-    }
+    const allMaster = await this.getParticipatingSchools();
+    const masterSchool = allMaster.find(s => 
+      s.id === schoolData.participating_school_id ||
+      (s.school_name && schoolData.school_name && 
+       s.school_name.trim().toLowerCase() === schoolData.school_name.trim().toLowerCase())
+    );
+
+    const schoolNameFinal = masterSchool ? masterSchool.school_name : (schoolData.school_name || 'Participating Institution');
+    const districtFinal = masterSchool ? masterSchool.district : (schoolData.district || 'Kolhapur');
+    const partSchoolId = masterSchool ? masterSchool.id : (schoolData.participating_school_id || `ps-${Date.now()}`);
 
     const raw = localStorage.getItem(STORAGE_KEYS.SCHOOLS);
     const schools: FullSchoolRegistration[] = raw ? JSON.parse(raw) : [];
-
-    // Check duplicate claim by another user
-    const existingOther = schools.find(s => 
-      s.school.participating_school_id === schoolData.participating_school_id &&
-      s.school.registered_by_user_id && 
-      s.school.registered_by_user_id !== userId
-    );
-
-    if (existingOther) {
-      throw new Error(
-        `This school (${masterSchool.school_name}) has already been registered or claimed by another representative. Please contact the administrator.`
-      );
-    }
 
     let existingIndex = -1;
     let schoolId = schoolData.id || localStorage.getItem(`user_school_${userId}`);
 
     if (schoolId) {
       existingIndex = schools.findIndex(s => s.school.id === schoolId);
-    } else {
-      existingIndex = schools.findIndex(s => s.school.participating_school_id === schoolData.participating_school_id);
+    }
+    if (existingIndex < 0) {
+      existingIndex = schools.findIndex(s => 
+        s.school.participating_school_id === partSchoolId ||
+        (s.school.school_name && schoolNameFinal && 
+         s.school.school_name.trim().toLowerCase() === schoolNameFinal.trim().toLowerCase())
+      );
     }
 
     const now = new Date().toISOString();
 
     if (existingIndex >= 0) {
-      // Update existing draft
+      // Update existing record
       const current = schools[existingIndex];
       const updatedSchool: School = {
         ...current.school,
         ...schoolData,
-        school_name: masterSchool.school_name, // Strict name preservation
-        district: masterSchool.district,
-        participating_school_id: masterSchool.id,
+        school_name: schoolNameFinal,
+        district: districtFinal,
+        participating_school_id: partSchoolId,
         registered_by_user_id: current.school.registered_by_user_id || userId,
+        status: schoolData.status || current.school.status || 'submitted',
+        principal_phone: schoolData.principal_phone || current.school.principal_phone || schoolData.contact_number || '',
         updated_at: now
       };
 
@@ -365,8 +373,8 @@ export const api = {
         school_id: updatedSchool.id
       };
 
-      const updatedStudents: Student[] = [1, 2, 3, 4].map(num => {
-        const existingStu = current.students.find(s => s.student_number === num);
+      const updatedStudents: Student[] = [1, 2, 3].map(num => {
+        const existingStu = current.students?.find(s => s.student_number === num);
         const incomingStu = studentsData.find(s => s.student_number === num) || {};
         return {
           id: existingStu?.id || `stu-${updatedSchool.id}-${num}`,
@@ -374,7 +382,7 @@ export const api = {
           student_number: num,
           full_name: incomingStu.full_name || existingStu?.full_name || '',
           class_name: incomingStu.class_name || existingStu?.class_name || '',
-          student_registration_number: incomingStu.student_registration_number || existingStu?.student_registration_number || incomingStu.registration_number || existingStu?.registration_number || '',
+          student_registration_number: incomingStu.student_registration_number || existingStu?.student_registration_number || (incomingStu as any).registration_number || (existingStu as any)?.registration_number || '',
           photo_path: incomingStu.photo_path || existingStu?.photo_path,
           school_id_document_path: incomingStu.school_id_document_path || existingStu?.school_id_document_path,
           identity_document_type: incomingStu.identity_document_type || existingStu?.identity_document_type || 'school_id',
@@ -397,22 +405,23 @@ export const api = {
     } else {
       // Create new registration for selected master school
       const newSchoolId = `sch-${Date.now()}`;
-      const regId = `EVT-2026-${String(schools.length + 1).padStart(3, '0')}`;
+      const regId = schoolData.registration_id || `EVT-2026-${String(schools.length + 1).padStart(3, '0')}`;
 
       const newSchool: School = {
         id: newSchoolId,
         registration_id: regId,
-        participating_school_id: masterSchool.id,
-        school_name: masterSchool.school_name,
-        district: masterSchool.district,
+        participating_school_id: partSchoolId,
+        school_name: schoolNameFinal,
+        district: districtFinal,
         school_code: schoolData.school_code || '',
         address: schoolData.address || '',
-        city: schoolData.city || masterSchool.district,
+        city: schoolData.city || districtFinal,
         principal_name: schoolData.principal_name || '',
+        principal_phone: schoolData.principal_phone || schoolData.contact_number || '',
         school_email: schoolData.school_email || '',
-        contact_number: schoolData.contact_number || '',
+        contact_number: schoolData.contact_number || schoolData.principal_phone || '',
         logo_path: schoolData.logo_path || '',
-        status: 'draft',
+        status: schoolData.status || 'submitted',
         registered_by_user_id: userId,
         is_representative_verified: false,
         created_at: now,
@@ -431,7 +440,7 @@ export const api = {
         created_at: now
       };
 
-      const newStudents: Student[] = [1, 2, 3, 4].map(num => {
+      const newStudents: Student[] = [1, 2, 3].map(num => {
         const incoming = studentsData.find(s => s.student_number === num) || {};
         return {
           id: `stu-${newSchoolId}-${num}`,
@@ -439,7 +448,7 @@ export const api = {
           student_number: num,
           full_name: incoming.full_name || '',
           class_name: incoming.class_name || '',
-          student_registration_number: incoming.student_registration_number || incoming.registration_number || '',
+          student_registration_number: incoming.student_registration_number || (incoming as any).registration_number || '',
           photo_path: incoming.photo_path || '',
           school_id_document_path: incoming.school_id_document_path || '',
           identity_document_type: incoming.identity_document_type || 'school_id',
@@ -481,14 +490,15 @@ export const api = {
       throw new Error('Incomplete Mentor details. Full name and contact phone are required.');
     }
 
-    // Enforce exactly 4 students with full details
-    if (reg.students.length !== 4) {
-      throw new Error('Exactly 4 students must be registered.');
+    // Enforce 3 mandatory students with full details
+    if (!reg.students || reg.students.length < 3) {
+      throw new Error('All 3 student delegates must be registered.');
     }
 
-    for (const student of reg.students) {
-      if (!student.full_name || !student.class_name) {
-        throw new Error(`Student ${student.student_number} details are incomplete (Name and Class are required).`);
+    for (let i = 0; i < 3; i++) {
+      const student = reg.students[i];
+      if (!student || !student.full_name?.trim() || !student.class_name?.trim()) {
+        throw new Error(`Student #${i + 1} details are incomplete (Name and Class are required).`);
       }
     }
 
@@ -753,7 +763,10 @@ export const api = {
     const raw = localStorage.getItem(STORAGE_KEYS.SCHOOLS);
     const schools: FullSchoolRegistration[] = raw ? JSON.parse(raw) : [];
     const index = schools.findIndex(
-      s => s.school.id === schoolIdOrParticipatingId || s.school.participating_school_id === schoolIdOrParticipatingId
+      s => s.school.id === schoolIdOrParticipatingId || 
+           s.school.participating_school_id === schoolIdOrParticipatingId ||
+           (s.school.school_name && schoolIdOrParticipatingId && 
+            s.school.school_name.trim().toLowerCase() === schoolIdOrParticipatingId.trim().toLowerCase())
     );
 
     if (index === -1) {
@@ -767,6 +780,7 @@ export const api = {
       ...current.school,
       ...(updated.school || {}),
       status: updated.status || updated.school?.status || current.school.status,
+      principal_phone: updated.school?.principal_phone || current.school.principal_phone || updated.school?.contact_number || current.school.contact_number,
       updated_at: now
     };
 
@@ -775,10 +789,10 @@ export const api = {
       ...(updated.mentor || {})
     };
 
-    let updatedStudents = current.students;
+    let updatedStudents = current.students || [];
     if (updated.students && updated.students.length > 0) {
-      updatedStudents = [1, 2, 3, 4].map(num => {
-        const existingStu = current.students.find(s => s.student_number === num);
+      updatedStudents = [1, 2, 3].map(num => {
+        const existingStu = current.students?.find(s => s.student_number === num);
         const incomingStu = updated.students?.find(s => s.student_number === num);
         if (!incomingStu) return existingStu || {
           id: `stu-${updatedSchool.id}-${num}`,
@@ -868,7 +882,10 @@ export const api = {
     const raw = localStorage.getItem(STORAGE_KEYS.SCHOOLS);
     const schools: FullSchoolRegistration[] = raw ? JSON.parse(raw) : [];
     const index = schools.findIndex(
-      s => s.school.id === schoolIdOrParticipatingId || s.school.participating_school_id === schoolIdOrParticipatingId
+      s => s.school.id === schoolIdOrParticipatingId || 
+           s.school.participating_school_id === schoolIdOrParticipatingId ||
+           (s.school.school_name && schoolIdOrParticipatingId && 
+            s.school.school_name.trim().toLowerCase() === schoolIdOrParticipatingId.trim().toLowerCase())
     );
 
     if (index === -1) {

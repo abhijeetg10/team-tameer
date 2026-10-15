@@ -332,9 +332,8 @@ export const generateAcknowledgementPDF = async (registration: FullSchoolRegistr
   doc.setTextColor(slate[0], slate[1], slate[2]);
   doc.text('Principal Mobile / Email', 40, 316);
 
-  doc.setFontSize(9);
-  doc.setTextColor(navy[0], navy[1], navy[2]);
-  const contactText = school.contact_number ? `Mobile: ${school.contact_number}` : 'Mobile: —';
+  const principalMob = (school as any).principal_phone || school.contact_number;
+  const contactText = principalMob ? `Mobile: ${principalMob}` : 'Mobile: —';
   const emailText = school.school_email ? `Email: ${school.school_email}` : '';
   doc.text([contactText, emailText].filter(Boolean).join('  |  '), 135, 316, { maxWidth: 420 });
 

@@ -39,6 +39,7 @@ export interface School {
   address: string;
   city: string;
   principal_name: string;
+  principal_phone?: string;
   school_email: string;
   contact_number: string;
   logo_path?: string;
