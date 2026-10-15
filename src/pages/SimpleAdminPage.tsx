@@ -34,6 +34,7 @@ import { GoogleSignInButton } from '../components/GoogleSignInButton';
 import { api } from '../lib/api';
 import { 
   DEFAULT_SUPER_ADMIN, 
+  SUPER_ADMIN_EMAILS,
   getAuthorizedAdmins, 
   isAuthorizedAdmin, 
   isSuperAdmin, 
@@ -98,6 +99,10 @@ export const SimpleAdminPage: React.FC = () => {
   // Handler to add admin
   const handleAddAdmin = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isSuper) {
+      alert('Access Restricted: Only Super Administrators can authorize new administrators.');
+      return;
+    }
     if (!newAdminInput.trim()) return;
 
     const res = addAuthorizedAdmin(newAdminInput);
@@ -111,6 +116,10 @@ export const SimpleAdminPage: React.FC = () => {
 
   // Handler to remove admin
   const handleRemoveAdmin = (email: string) => {
+    if (!isSuper) {
+      alert('Access Restricted: Only Super Administrators can revoke administrator access.');
+      return;
+    }
     if (window.confirm(`Revoke admin access for ${email}?`)) {
       const res = removeAuthorizedAdmin(email);
       setAdminFeedback({ text: res.message, isError: !res.success });
@@ -146,6 +155,10 @@ export const SimpleAdminPage: React.FC = () => {
   const [actionMessage, setActionMessage] = useState<{ text: string; isError: boolean } | null>(null);
 
   const handleOpenEdit = (item: MasterSchoolListItem) => {
+    if (!isSuper) {
+      alert('Access Restricted: Only Super Administrators have permission to fill or edit registration data. Authorized Administrators have View-Only access.');
+      return;
+    }
     setEditingItem(item);
     const reg = item.registration;
     setEditUdise(reg?.school.school_code || '');
@@ -182,6 +195,10 @@ export const SimpleAdminPage: React.FC = () => {
 
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isSuper) {
+      alert('Access Restricted: Only Super Administrators have permission to save or modify registration records.');
+      return;
+    }
     if (!editingItem) return;
 
     if (!editMentorName.trim() || !editMentorPhone.trim()) {
@@ -277,6 +294,10 @@ export const SimpleAdminPage: React.FC = () => {
   };
 
   const handleDeleteRegistration = async (item: MasterSchoolListItem) => {
+    if (!isSuper) {
+      alert('Access Restricted: Only Super Administrators have permission to delete registration records.');
+      return;
+    }
     const sName = item.participatingSchool.school_name;
     const ok = window.confirm(
       `Are you sure you want to permanently delete the registration data for:\n"${sName}"?\n\nThis will remove mentor info, student delegates, uploaded documents, and reset status back to Not Registered.`
@@ -316,7 +337,7 @@ export const SimpleAdminPage: React.FC = () => {
       loginWithEmail(clean, isSuperAdmin(clean) ? 'superadmin' : 'admin');
     } else {
       setDirectAuthError(
-        `Access Denied: "${clean}" is not an authorized administrator. Only ${DEFAULT_SUPER_ADMIN} or emails added by the Super Admin have access.`
+        `Access Denied: "${clean}" is not an authorized administrator. Only designated Super Admins (${SUPER_ADMIN_EMAILS.join(', ')}) or emails added by a Super Admin have access.`
       );
     }
   };
@@ -460,8 +481,8 @@ export const SimpleAdminPage: React.FC = () => {
             <p className="text-sm text-slate-600 leading-relaxed max-w-md mx-auto">
               This section is strictly restricted to designated administrators.
               <br />
-              <strong className="text-slate-900 font-bold">Primary Super Admin:</strong>{' '}
-              <span className="text-blue-600 font-mono font-bold">{DEFAULT_SUPER_ADMIN}</span>
+              <strong className="text-slate-900 font-bold">Designated Super Admins:</strong>{' '}
+              <span className="text-blue-600 font-mono font-bold">argaikwad24@gmail.com</span> &bull; <span className="text-blue-600 font-mono font-bold">rehanchougle2000@gmail.com</span>
             </p>
           </div>
 
@@ -493,7 +514,7 @@ export const SimpleAdminPage: React.FC = () => {
                 type="email"
                 value={directEmailInput}
                 onChange={(e) => setDirectEmailInput(e.target.value)}
-                placeholder="e.g. argaikwad24@gmail.com"
+                placeholder="e.g. argaikwad24@gmail.com or rehanchougle2000@gmail.com"
                 required
                 className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 text-sm font-semibold focus:outline-none focus:border-blue-600 bg-slate-50/50"
               />
@@ -550,7 +571,7 @@ export const SimpleAdminPage: React.FC = () => {
           <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-600 text-left space-y-1">
             <p className="font-bold text-slate-800">Need Admin Access?</p>
             <p>
-              Please sign in with the primary administrator account (<strong className="text-slate-900">{DEFAULT_SUPER_ADMIN}</strong>) or ask them to add your email ({user.google_email}) to the authorized administrators list.
+              Please sign in with a Super Administrator account (<strong className="text-slate-900">argaikwad24@gmail.com</strong> or <strong className="text-slate-900">rehanchougle2000@gmail.com</strong>) or ask them to add your email ({user.google_email}) to the authorized administrators list.
             </p>
           </div>
 
@@ -609,7 +630,7 @@ export const SimpleAdminPage: React.FC = () => {
                     ? 'bg-amber-100 text-amber-900 border-amber-300' 
                     : 'bg-purple-100 text-purple-800 border-purple-200'
                 }`}>
-                  {isSuper ? '★ Super Admin Console' : 'Admin Console'}
+                  {isSuper ? '★ Super Admin Console (Full Access)' : 'Admin Console (View-Only)'}
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-slate-500 mt-1.5 font-medium flex items-center gap-2">
@@ -687,7 +708,7 @@ export const SimpleAdminPage: React.FC = () => {
         </div>
       </div>
 
-      {/* SUPER ADMIN ACCESS CONTROL CARD (Only visible to argaikwad24@gmail.com) */}
+      {/* SUPER ADMIN ACCESS CONTROL CARD (Only visible to Super Admins) */}
       {isSuper && showManageAdmins && (
         <div className="bg-gradient-to-br from-slate-900 to-indigo-950 text-white rounded-3xl p-6 sm:p-9 shadow-2xl border-2 border-indigo-700/50 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/15">
@@ -700,7 +721,7 @@ export const SimpleAdminPage: React.FC = () => {
                   Administrator Access Control
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-300">
-                  As the Super Admin (<strong className="text-amber-300">{DEFAULT_SUPER_ADMIN}</strong>), you can authorize or revoke other admin accounts.
+                  As a Super Administrator, you can authorize new administrators (who have <strong className="text-amber-300">View-Only access</strong> to view and export data) or revoke access.
                 </p>
               </div>
             </div>
@@ -749,7 +770,7 @@ export const SimpleAdminPage: React.FC = () => {
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {adminList.map((email) => {
-                const isSuperRecord = email.toLowerCase() === DEFAULT_SUPER_ADMIN.toLowerCase();
+                const isSuperRecord = isSuperAdmin(email);
                 return (
                   <div
                     key={email}
@@ -759,12 +780,12 @@ export const SimpleAdminPage: React.FC = () => {
                       <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs ${
                         isSuperRecord ? 'bg-amber-400 text-slate-950' : 'bg-white/15 text-white'
                       }`}>
-                        {isSuperRecord ? '★' : '✓'}
+                        {isSuperRecord ? '★' : '👁'}
                       </div>
                       <div className="truncate">
                         <p className="text-sm font-black text-white truncate">{email}</p>
                         <p className="text-[10px] text-slate-400 font-medium">
-                          {isSuperRecord ? 'Primary Super Administrator (Owner)' : 'Authorized Administrator'}
+                          {isSuperRecord ? 'Super Administrator (Full Management)' : 'Authorized Administrator (View-Only)'}
                         </p>
                       </div>
                     </div>
@@ -1000,17 +1021,19 @@ export const SimpleAdminPage: React.FC = () => {
                       </button>
                     )}
 
-                    <button
-                      type="button"
-                      onClick={() => handleOpenEdit(item)}
-                      title={hasReg ? "Edit Registration Form Data" : "Register / Fill Form Data"}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white border-2 border-blue-200 hover:border-blue-600 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer shadow-2xs"
-                    >
-                      {hasReg ? <Edit3 className="w-3.5 h-3.5" /> : <PlusCircle className="w-3.5 h-3.5" />}
-                      <span>{hasReg ? 'Edit Data' : '+ Fill Form'}</span>
-                    </button>
+                    {isSuper && (
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEdit(item)}
+                        title={hasReg ? "Edit Registration Form Data" : "Register / Fill Form Data"}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white border-2 border-blue-200 hover:border-blue-600 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer shadow-2xs"
+                      >
+                        {hasReg ? <Edit3 className="w-3.5 h-3.5" /> : <PlusCircle className="w-3.5 h-3.5" />}
+                        <span>{hasReg ? 'Edit Data' : '+ Fill Form'}</span>
+                      </button>
+                    )}
 
-                    {hasReg && (
+                    {isSuper && hasReg && (
                       <button
                         type="button"
                         onClick={() => handleDeleteRegistration(item)}
@@ -1241,14 +1264,20 @@ export const SimpleAdminPage: React.FC = () => {
                   <p className="text-sm text-slate-500 font-semibold italic">
                     This school has not submitted their registration yet.
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => handleOpenEdit(item)}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs sm:text-sm font-extrabold shadow-sm hover:shadow transition-all cursor-pointer"
-                  >
-                    <PlusCircle className="w-4 h-4" />
-                    <span>Fill Registration Form for this School</span>
-                  </button>
+                  {isSuper ? (
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEdit(item)}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs sm:text-sm font-extrabold shadow-sm hover:shadow transition-all cursor-pointer"
+                    >
+                      <PlusCircle className="w-4 h-4" />
+                      <span>Fill Registration Form for this School</span>
+                    </button>
+                  ) : (
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 border border-slate-200 text-xs font-bold text-slate-500">
+                      <span>Awaiting submission from school representative</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

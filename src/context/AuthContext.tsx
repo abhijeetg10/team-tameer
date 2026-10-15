@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserProfile, UserRole } from '../types';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { isSuperAdmin, isAuthorizedAdmin } from '../lib/adminAuth';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -66,7 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         google_email: cleanEmail,
         full_name: metadata.full_name || metadata.name || cleanEmail.split('@')[0] || 'Representative',
         avatar_url: metadata.avatar_url || metadata.picture || '',
-        role: cleanEmail === 'argaikwad24@gmail.com' ? 'admin' : 'school',
+        role: isSuperAdmin(cleanEmail) ? 'superadmin' : isAuthorizedAdmin(cleanEmail) ? 'admin' : 'school',
         created_at: sessionUser.created_at || new Date().toISOString()
       };
 
@@ -157,23 +158,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const realUser: UserProfile = {
       id: `usr-${Date.now()}`,
       google_email: cleanEmail,
-      full_name: customName || (cleanEmail === 'argaikwad24@gmail.com' ? 'Super Administrator' : 'School Representative'),
+      full_name: customName || (isSuperAdmin(cleanEmail) ? 'Super Administrator' : 'School Representative'),
       avatar_url: '',
-      role: role,
+      role: isSuperAdmin(cleanEmail) ? 'superadmin' : role,
       created_at: new Date().toISOString()
     };
     setUser(realUser);
     localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(realUser));
   };
 
-  const loginWithEmail = (email: string, role: UserRole = 'admin') => {
+  const loginWithEmail = (email: string, role?: UserRole) => {
     const cleanEmail = email.trim().toLowerCase();
+    const isSuper = isSuperAdmin(cleanEmail);
+    const assignedRole: UserRole = role || (isSuper ? 'superadmin' : isAuthorizedAdmin(cleanEmail) ? 'admin' : 'school');
     const adminUser: UserProfile = {
       id: `usr-admin-${cleanEmail.replace(/[^a-z0-9]/g, '_')}`,
       google_email: cleanEmail,
-      full_name: cleanEmail === 'argaikwad24@gmail.com' ? 'Super Administrator (argaikwad24)' : `Admin (${cleanEmail.split('@')[0]})`,
+      full_name: isSuper ? `Super Administrator (${cleanEmail.split('@')[0]})` : `Admin (${cleanEmail.split('@')[0]})`,
       avatar_url: '',
-      role: role,
+      role: assignedRole,
       created_at: new Date().toISOString()
     };
     setUser(adminUser);

@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { GoogleSignInButton } from '../components/GoogleSignInButton';
-import { isAuthorizedAdmin } from '../lib/adminAuth';
+import { isAuthorizedAdmin, isSuperAdmin } from '../lib/adminAuth';
 
 export const LandingPage: React.FC = () => {
   const { user, logout, authError, clearAuthError, loginWithEmail } = useAuth();
@@ -190,7 +190,10 @@ export const LandingPage: React.FC = () => {
                         e.preventDefault();
                         if (!directEmailInput.trim()) return;
                         const clean = directEmailInput.trim().toLowerCase();
-                        loginWithEmail(clean, clean === 'argaikwad24@gmail.com' ? 'admin' : 'school');
+                        loginWithEmail(
+                          clean,
+                          isSuperAdmin(clean) ? 'superadmin' : isAuthorizedAdmin(clean) ? 'admin' : 'school'
+                        );
                       }}
                       className="space-y-3 pt-2 text-left"
                     >
@@ -201,7 +204,7 @@ export const LandingPage: React.FC = () => {
                         <input
                           type="email"
                           required
-                          placeholder="e.g. argaikwad24@gmail.com or school@edu.in"
+                          placeholder="e.g. argaikwad24@gmail.com, rehanchougle2000@gmail.com, or school@edu.in"
                           value={directEmailInput}
                           onChange={(e) => setDirectEmailInput(e.target.value)}
                           className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium"
@@ -214,7 +217,7 @@ export const LandingPage: React.FC = () => {
                         </button>
                       </div>
                       <p className="text-[11px] text-slate-500">
-                        Use <strong>argaikwad24@gmail.com</strong> for Super Admin or your school email for registration.
+                        Designated Super Admins: <strong>argaikwad24@gmail.com</strong>, <strong>rehanchougle2000@gmail.com</strong>
                       </p>
                     </form>
                   )}
