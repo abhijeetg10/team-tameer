@@ -12,7 +12,8 @@ import {
   MapPin,
   LogIn,
   LogOut,
-  AlertCircle
+  AlertCircle,
+  Phone
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { GoogleSignInButton } from '../components/GoogleSignInButton';
@@ -392,6 +393,73 @@ export const LandingPage: React.FC = () => {
                 className="w-full sm:w-auto"
               />
             )}
+          </div>
+        </div>
+      </section>
+
+      {/* QUERIES & DIFFICULTIES / HELPDESK */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-16">
+        <div className="bg-white rounded-3xl border-2 border-slate-200 p-8 sm:p-12 shadow-sm">
+          <div className="text-center max-w-2xl mx-auto space-y-3 mb-8">
+            <span className="text-xs font-black uppercase tracking-wider text-blue-700 bg-blue-50 px-3.5 py-1.5 rounded-full border border-blue-200">
+              Helpdesk & Direct Contacts
+            </span>
+            <h3 className="text-2xl sm:text-3xl font-black text-slate-900">
+              Facing Queries or Technical Difficulties?
+            </h3>
+            <p className="text-sm sm:text-base text-slate-600 font-medium">
+              If your school is already registered, need to make corrections, or are facing any difficulties on the portal, please contact us directly:
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Contact 1: Ibrahim sir */}
+            <div className="p-6 sm:p-8 rounded-2xl bg-gradient-to-br from-blue-50/70 to-white border-2 border-blue-200 flex flex-col justify-between space-y-4 hover:shadow-md transition-all">
+              <div>
+                <span className="text-xs font-extrabold uppercase tracking-wider text-blue-700 bg-blue-100 px-3 py-1 rounded-lg">
+                  Event Administration & School Queries
+                </span>
+                <h4 className="text-xl sm:text-2xl font-black text-slate-900 mt-3">
+                  Ibrahim sir
+                </h4>
+                <p className="text-sm text-slate-600 font-medium mt-1">
+                  Contact for school accreditation, participation approvals, mentor queries, and event coordination.
+                </p>
+              </div>
+              <div className="pt-3 border-t border-blue-100">
+                <a
+                  href="tel:+919850461062"
+                  className="inline-flex items-center gap-2.5 px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-base font-extrabold shadow-sm transition-all w-full sm:w-auto justify-center"
+                >
+                  <Phone className="w-5 h-5" />
+                  <span>+91 98504 61062</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Contact 2: Rehan Chougale */}
+            <div className="p-6 sm:p-8 rounded-2xl bg-gradient-to-br from-purple-50/70 to-white border-2 border-purple-200 flex flex-col justify-between space-y-4 hover:shadow-md transition-all">
+              <div>
+                <span className="text-xs font-extrabold uppercase tracking-wider text-purple-700 bg-purple-100 px-3 py-1 rounded-lg">
+                  Software Development Side Issues
+                </span>
+                <h4 className="text-xl sm:text-2xl font-black text-slate-900 mt-3">
+                  Rehan Chougale
+                </h4>
+                <p className="text-sm text-slate-600 font-medium mt-1">
+                  Contact for login issues, portal bugs, registration form difficulties, document upload, or software queries.
+                </p>
+              </div>
+              <div className="pt-3 border-t border-purple-100">
+                <a
+                  href="tel:7588171372"
+                  className="inline-flex items-center gap-2.5 px-5 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-base font-extrabold shadow-sm transition-all w-full sm:w-auto justify-center"
+                >
+                  <Phone className="w-5 h-5" />
+                  <span>7588171372</span>
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </section>

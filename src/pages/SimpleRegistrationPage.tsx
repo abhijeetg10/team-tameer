@@ -10,12 +10,14 @@ import {
   FileText,
   LogOut,
   ArrowLeft,
-  Lock
+  Lock,
+  Phone,
+  Mail
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { GoogleSignInButton } from '../components/GoogleSignInButton';
 import { api } from '../lib/api';
-import { District, ParticipatingSchool, Student } from '../types';
+import { District, ParticipatingSchool, Student, FullSchoolRegistration } from '../types';
 
 export const SimpleRegistrationPage: React.FC = () => {
   const { user, logout, authError, clearAuthError, loginWithEmail } = useAuth();
@@ -57,14 +59,29 @@ export const SimpleRegistrationPage: React.FC = () => {
   const [submittedRegId, setSubmittedRegId] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Existing registered schools detector
+  const [allRegisteredSchools, setAllRegisteredSchools] = useState<FullSchoolRegistration[]>([]);
+  const [alreadyRegisteredSchool, setAlreadyRegisteredSchool] = useState<FullSchoolRegistration | null>(null);
+
+  // Load existing registrations
+  useEffect(() => {
+    api.getAllSchools().then((regs) => {
+      setAllRegisteredSchools(regs);
+    });
+  }, []);
+
   // Update schools dropdown when district changes
   useEffect(() => {
     if (district) {
       api.getParticipatingSchools(district).then((list) => {
         setSchoolsList(list);
       });
+      api.getAllSchools().then((regs) => {
+        setAllRegisteredSchools(regs);
+      });
     } else {
       setSchoolsList([]);
+      setAlreadyRegisteredSchool(null);
     }
   }, [district]);
 
@@ -75,6 +92,8 @@ export const SimpleRegistrationPage: React.FC = () => {
     if (found) {
       setSchoolName(found.school_name);
     }
+    const match = allRegisteredSchools.find(r => r.school.participating_school_id === psId);
+    setAlreadyRegisteredSchool(match || null);
   };
 
   // Convert uploaded file to base64 data URL
@@ -120,6 +139,12 @@ export const SimpleRegistrationPage: React.FC = () => {
     }
     if (!selectedSchoolId || !schoolName.trim()) {
       setErrorMessage('Please select your participating school from the dropdown.');
+      return;
+    }
+    if (alreadyRegisteredSchool) {
+      setErrorMessage(
+        `This school (${schoolName}) is already registered! If you have any queries or need assistance, please contact Ibrahim sir (+91 98504 61062) or Rehan Chougale (7588171372).`
+      );
       return;
     }
     if (!schoolUdise.trim()) {
@@ -217,6 +242,7 @@ export const SimpleRegistrationPage: React.FC = () => {
     setIsSubmitted(false);
     setSubmittedRegId('');
     setErrorMessage(null);
+    setAlreadyRegisteredSchool(null);
   };
 
   // 1. IF NOT LOGGED IN: SHOW GOOGLE SIGN-IN GATE
@@ -552,11 +578,14 @@ export const SimpleRegistrationPage: React.FC = () => {
                 <option value="">
                   {district ? `-- Choose School in ${district} --` : '-- Select District First --'}
                 </option>
-                {schoolsList.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.school_name}
-                  </option>
-                ))}
+                {schoolsList.map((s) => {
+                  const isReg = allRegisteredSchools.some(r => r.school.participating_school_id === s.id);
+                  return (
+                    <option key={s.id} value={s.id}>
+                      {s.school_name} {isReg ? ' — (Already Registered)' : ''}
+                    </option>
+                  );
+                })}
               </select>
               {district === 'Satara' && (
                 <p className="text-sm text-purple-800 font-bold mt-2.5 flex items-center gap-1.5">
@@ -565,6 +594,66 @@ export const SimpleRegistrationPage: React.FC = () => {
                 </p>
               )}
             </div>
+
+            {/* ALREADY REGISTERED NOTICE & CONTACT ADMIN BANNER */}
+            {alreadyRegisteredSchool && (
+              <div className="md:col-span-2 p-6 sm:p-7 rounded-2xl bg-amber-50 border-2 border-amber-300 text-amber-950 space-y-4 shadow-sm animate-in fade-in duration-200">
+                <div className="flex items-start gap-3.5">
+                  <AlertCircle className="w-7 h-7 text-amber-600 shrink-0 mt-0.5" />
+                  <div className="space-y-1.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h4 className="text-lg sm:text-xl font-black text-amber-900">
+                        Notice: This School is Already Registered!
+                      </h4>
+                      {alreadyRegisteredSchool.school.registration_id && (
+                        <span className="font-mono text-xs font-bold text-amber-900 bg-amber-200/80 px-2.5 py-0.5 rounded-lg border border-amber-300">
+                          ID: {alreadyRegisteredSchool.school.registration_id}
+                        </span>
+                      )}
+                      <span className="text-xs font-bold uppercase tracking-wide bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-lg border border-emerald-200">
+                        Status: {alreadyRegisteredSchool.school.status}
+                      </span>
+                    </div>
+                    <p className="text-sm font-semibold text-amber-900 leading-relaxed">
+                      <strong>{schoolName}</strong> has already been registered on this platform.
+                    </p>
+                    <p className="text-sm text-amber-800 leading-relaxed font-medium">
+                      If you represent this institution and have any queries, need corrections, or faced difficulties, please contact our event administration or software development team below:
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-amber-200">
+                  <div className="p-4 bg-white rounded-xl border border-amber-200 shadow-2xs space-y-1">
+                    <p className="text-xs font-black uppercase tracking-wider text-slate-500">
+                      Event Administration & Queries
+                    </p>
+                    <p className="font-black text-slate-900 text-base">Ibrahim sir</p>
+                    <a
+                      href="tel:+919850461062"
+                      className="inline-flex items-center gap-2 text-blue-700 font-extrabold text-sm hover:underline pt-0.5"
+                    >
+                      <Phone className="w-4 h-4 text-emerald-600" />
+                      <span>+91 98504 61062</span>
+                    </a>
+                  </div>
+
+                  <div className="p-4 bg-white rounded-xl border border-amber-200 shadow-2xs space-y-1">
+                    <p className="text-xs font-black uppercase tracking-wider text-slate-500">
+                      Software Development Side Issues
+                    </p>
+                    <p className="font-black text-slate-900 text-base">Rehan Chougale</p>
+                    <a
+                      href="tel:7588171372"
+                      className="inline-flex items-center gap-2 text-blue-700 font-extrabold text-sm hover:underline pt-0.5"
+                    >
+                      <Phone className="w-4 h-4 text-emerald-600" />
+                      <span>7588171372</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* School Udise Number Field */}
             <div className="md:col-span-2">
@@ -859,6 +948,34 @@ export const SimpleRegistrationPage: React.FC = () => {
           </div>
         </div>
 
+        {/* HELPDESK & SUPPORT CONTACTS BAR */}
+        <div className="p-6 sm:p-7 rounded-3xl bg-white border-2 border-slate-200 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
+          <div>
+            <p className="font-black text-slate-900 text-base sm:text-lg">
+              Facing Difficulties or Have Queries?
+            </p>
+            <p className="text-xs sm:text-sm text-slate-500 font-medium">
+              For event coordination or software development issues, feel free to contact us directly:
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <a
+              href="tel:+919850461062"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-900 rounded-xl border border-blue-200 text-xs sm:text-sm font-extrabold transition-all"
+            >
+              <Phone className="w-4 h-4 text-emerald-600" />
+              <span>Ibrahim sir: +91 98504 61062</span>
+            </a>
+            <a
+              href="tel:7588171372"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-purple-50 hover:bg-purple-100 text-purple-900 rounded-xl border border-purple-200 text-xs sm:text-sm font-extrabold transition-all"
+            >
+              <Phone className="w-4 h-4 text-purple-600" />
+              <span>Rehan Chougale: 7588171372</span>
+            </a>
+          </div>
+        </div>
+
         {/* SUBMISSION ACTION CARD */}
         <div className="bg-white rounded-3xl border-2 border-slate-200 p-8 sm:p-12 shadow-md flex flex-col lg:flex-row items-center justify-between gap-8">
           <div className="space-y-2">
@@ -872,11 +989,20 @@ export const SimpleRegistrationPage: React.FC = () => {
 
           <button
             type="submit"
-            disabled={isSubmitting}
-            className="w-full lg:w-auto px-10 py-5 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white text-lg font-black rounded-2xl shadow-xl hover:shadow-2xl transition-all flex items-center justify-center gap-3 disabled:opacity-50 shrink-0 cursor-pointer"
+            disabled={isSubmitting || Boolean(alreadyRegisteredSchool)}
+            className={`w-full lg:w-auto px-10 py-5 text-lg font-black rounded-2xl shadow-xl transition-all flex items-center justify-center gap-3 shrink-0 ${
+              alreadyRegisteredSchool
+                ? 'bg-amber-500 text-white cursor-not-allowed opacity-90'
+                : 'bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white hover:shadow-2xl cursor-pointer disabled:opacity-50'
+            }`}
           >
             {isSubmitting ? (
               <span>Submitting Registration...</span>
+            ) : alreadyRegisteredSchool ? (
+              <>
+                <AlertCircle className="w-6 h-6" />
+                <span>School Already Registered</span>
+              </>
             ) : (
               <>
                 <CheckCircle2 className="w-6 h-6" />
