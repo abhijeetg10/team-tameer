@@ -21,6 +21,7 @@ import { GoogleSignInButton } from '../components/GoogleSignInButton';
 import { api } from '../lib/api';
 import { District, ParticipatingSchool, Student, FullSchoolRegistration } from '../types';
 import { generateAcknowledgementPDF } from '../lib/pdfGenerator';
+import { isAuthorizedAdmin } from '../lib/adminAuth';
 
 export const SimpleRegistrationPage: React.FC = () => {
   const { user, logout, authError, clearAuthError, loginWithEmail } = useAuth();
@@ -585,12 +586,14 @@ export const SimpleRegistrationPage: React.FC = () => {
             >
               Submit Another Response
             </button>
-            <Link
-              to="/admin"
-              className="w-full sm:w-auto px-7 py-3.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-extrabold transition-all text-center"
-            >
-              View in Admin Panel
-            </Link>
+            {user && (user.role === 'admin' || user.role === 'superadmin' || isAuthorizedAdmin(user.google_email)) && (
+              <Link
+                to="/admin"
+                className="w-full sm:w-auto px-7 py-3.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-extrabold transition-all text-center"
+              >
+                View in Admin Panel
+              </Link>
+            )}
             <Link
               to="/"
               className="w-full sm:w-auto px-7 py-3.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-extrabold transition-all text-center"
