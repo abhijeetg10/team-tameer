@@ -89,14 +89,22 @@ export const StudentForm: React.FC<StudentFormProps> = ({
             onChange={(e) => handleFieldChange('full_name', e.target.value)}
           />
 
-          <Input
-            label="Class / Grade & Section"
-            placeholder="e.g. Class 11-B"
-            required
-            value={student.class_name || ''}
-            disabled={disabled}
-            onChange={(e) => handleFieldChange('class_name', e.target.value)}
-          />
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Class / Standard <span className="text-rose-500">*</span>
+            </label>
+            <select
+              required
+              disabled={disabled}
+              value={student.class_name || ''}
+              onChange={(e) => handleFieldChange('class_name', e.target.value)}
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-blue-600 bg-white"
+            >
+              <option value="">-- Select Class --</option>
+              <option value="8th">8th Standard</option>
+              <option value="9th">9th Standard</option>
+            </select>
+          </div>
 
           <Input
             label="Student Registration Number"

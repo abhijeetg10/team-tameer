@@ -72,7 +72,6 @@ export const RegistrationWizard: React.FC = () => {
     { student_number: 1, full_name: '', class_name: '', student_registration_number: '', photo_path: '', school_id_document_path: '', identity_document_type: 'school_id' },
     { student_number: 2, full_name: '', class_name: '', student_registration_number: '', photo_path: '', school_id_document_path: '', identity_document_type: 'school_id' },
     { student_number: 3, full_name: '', class_name: '', student_registration_number: '', photo_path: '', school_id_document_path: '', identity_document_type: 'school_id' },
-    { student_number: 4, full_name: '', class_name: '', student_registration_number: '', photo_path: '', school_id_document_path: '', identity_document_type: 'school_id' },
   ]);
 
   // Step 4 Mandatory Declarations
@@ -111,7 +110,7 @@ export const RegistrationWizard: React.FC = () => {
       {
         student_number: 1,
         full_name: 'Mohammad Rehan Shaikh',
-        class_name: 'Class 10-A',
+        class_name: '8th',
         photo_path: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200&auto=format&fit=crop&q=80',
         school_id_document_path: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&auto=format&fit=crop&q=80',
         identity_document_type: 'school_id',
@@ -119,7 +118,7 @@ export const RegistrationWizard: React.FC = () => {
       {
         student_number: 2,
         full_name: 'Zoya Fatima Pathan',
-        class_name: 'Class 10-B',
+        class_name: '9th',
         photo_path: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&auto=format&fit=crop&q=80',
         school_id_document_path: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&auto=format&fit=crop&q=80',
         identity_document_type: 'school_id',
@@ -127,16 +126,8 @@ export const RegistrationWizard: React.FC = () => {
       {
         student_number: 3,
         full_name: 'Amanullah Mujawar',
-        class_name: 'Class 9-A',
+        class_name: '9th',
         photo_path: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
-        school_id_document_path: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&auto=format&fit=crop&q=80',
-        identity_document_type: 'school_id',
-      },
-      {
-        student_number: 4,
-        full_name: 'Mariyam Inamdar',
-        class_name: 'Class 9-B',
-        photo_path: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&auto=format&fit=crop&q=80',
         school_id_document_path: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&auto=format&fit=crop&q=80',
         identity_document_type: 'school_id',
       },
@@ -169,8 +160,8 @@ export const RegistrationWizard: React.FC = () => {
 
           setSchool(existing.school);
           setMentor(existing.mentor);
-          if (existing.students && existing.students.length === 4) {
-            setStudents(existing.students);
+          if (existing.students && existing.students.length >= 3) {
+            setStudents(existing.students.slice(0, 3));
           }
           setLastSavedTime(new Date(existing.school.updated_at).toLocaleTimeString());
         }
@@ -221,12 +212,12 @@ export const RegistrationWizard: React.FC = () => {
     mentor.id_document_path
   );
 
-  // Step 3 Validation (All 4 students must have name, class, photo, and school id)
+  // Step 3 Validation (All 3 students must have name, class, photo, and school id)
   const isStudentComplete = (stu: Partial<Student>) => Boolean(
     stu.full_name && stu.class_name && stu.photo_path && stu.school_id_document_path
   );
   const completedStudentsCount = students.filter(isStudentComplete).length;
-  const isStep3Valid = completedStudentsCount === 4;
+  const isStep3Valid = completedStudentsCount === 3;
 
   // Step 4 Validation
   const canSubmit = isStep1Valid && isStep2Valid && isStep3Valid && 
@@ -585,13 +576,13 @@ export const RegistrationWizard: React.FC = () => {
                   setCurrentStep(3);
                 }}
               >
-                Proceed to 4 Student Delegates
+                Proceed to 3 Student Delegates
               </Button>
             </div>
           </div>
         )}
 
-        {/* ================= STEP 3: 4 STUDENTS INFORMATION ================= */}
+        {/* ================= STEP 3: 3 STUDENTS INFORMATION ================= */}
         {currentStep === 3 && (
           <div className="space-y-6">
             <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs">
@@ -599,10 +590,10 @@ export const RegistrationWizard: React.FC = () => {
                 <div>
                   <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                     <Users className="w-5 h-5 text-blue-600" />
-                    Step 3: Student Delegates (Exactly 4 Required)
+                    Step 3: Student Delegates (Exactly 3 Required)
                   </h3>
                   <p className="text-xs text-slate-500 mt-1">
-                    Representing <strong>{school.school_name}</strong>. Each school delegation must consist of exactly 4 students.
+                    Representing <strong>{school.school_name}</strong>. Each school delegation must consist of exactly 3 students.
                   </p>
                 </div>
 
@@ -611,15 +602,15 @@ export const RegistrationWizard: React.FC = () => {
                     Completed Profiles
                   </span>
                   <span className="text-lg font-black text-blue-900">
-                    {completedStudentsCount} / 4 Students
+                    {completedStudentsCount} / 3 Students
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* 4 Student Cards Grid */}
+            {/* 3 Student Cards Grid */}
             <div className="space-y-4">
-              {[0, 1, 2, 3].map((idx) => (
+              {[0, 1, 2].map((idx) => (
                 <StudentForm
                   key={idx}
                   studentNumber={idx + 1}
@@ -650,7 +641,7 @@ export const RegistrationWizard: React.FC = () => {
                   setCurrentStep(4);
                 }}
               >
-                Review & Submit ({completedStudentsCount}/4 Ready)
+                Review & Submit ({completedStudentsCount}/3 Ready)
               </Button>
             </div>
           </div>
@@ -735,11 +726,11 @@ export const RegistrationWizard: React.FC = () => {
               </div>
             </div>
 
-            {/* 4 Students Summary Grid */}
+            {/* 3 Students Summary Grid */}
             <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-4 shadow-xs">
               <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                  Registered Student Delegation (4 / 4 Complete)
+                  Registered Student Delegation (3 / 3 Complete)
                 </h4>
                 <button
                   onClick={() => setCurrentStep(3)}
@@ -749,7 +740,7 @@ export const RegistrationWizard: React.FC = () => {
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {students.map((stu, i) => (
                   <div key={i} className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-center space-y-2">
                     <img

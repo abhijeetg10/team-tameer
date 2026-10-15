@@ -119,8 +119,7 @@ export const DistrictRegistrationsPage: React.FC = () => {
       'Mentor Phone',
       'Student 1',
       'Student 2',
-      'Student 3',
-      'Student 4'
+      'Student 3'
     ];
 
     const rows = filteredSchools.map(item => [
@@ -136,7 +135,6 @@ export const DistrictRegistrationsPage: React.FC = () => {
       `"${item.registration?.students[0]?.full_name || 'N/A'}"`,
       `"${item.registration?.students[1]?.full_name || 'N/A'}"`,
       `"${item.registration?.students[2]?.full_name || 'N/A'}"`,
-      `"${item.registration?.students[3]?.full_name || 'N/A'}"`,
     ]);
 
     const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');

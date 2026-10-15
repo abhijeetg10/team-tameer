@@ -280,10 +280,10 @@ export const LandingPage: React.FC = () => {
               3
             </div>
             <h3 className="text-lg font-bold text-slate-900">
-              Mentor & 4 Students
+              Mentor & 3 Students
             </h3>
             <p className="text-sm text-slate-500 leading-relaxed">
-              Provide details for 1 Faculty Mentor and 4 Student Delegates with photos and ID documents.
+              Provide details for 1 Faculty Mentor and 3 Student Delegates with photos and ID documents.
             </p>
           </div>
 
@@ -374,7 +374,7 @@ export const LandingPage: React.FC = () => {
               Ready to Register Your School's Team?
             </h3>
             <p className="text-base text-slate-300 leading-relaxed">
-              Each institution registers <strong>1 Faculty Mentor</strong> and <strong>3 Mandatory Student Delegates</strong> (with an optional 4th delegate). Complete with official School UDISE number.
+              Each institution registers <strong>1 Faculty Mentor</strong> and <strong>3 Student Delegates</strong>. Complete with official School UDISE number.
             </p>
           </div>
 

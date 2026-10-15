@@ -114,6 +114,8 @@ export const SimpleAdminPage: React.FC = () => {
   const [editingItem, setEditingItem] = useState<MasterSchoolListItem | null>(null);
   const [editUdise, setEditUdise] = useState('');
   const [editStatus, setEditStatus] = useState<RegistrationStatus>('submitted');
+  const [editPrincipalName, setEditPrincipalName] = useState('');
+  const [editPrincipalPhone, setEditPrincipalPhone] = useState('');
   const [editContact, setEditContact] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editMentorName, setEditMentorName] = useState('');
@@ -128,7 +130,6 @@ export const SimpleAdminPage: React.FC = () => {
     { name: '', className: '', regNo: '' },
     { name: '', className: '', regNo: '' },
     { name: '', className: '', regNo: '' },
-    { name: '', className: '', regNo: '' },
   ]);
   const [isSaving, setIsSaving] = useState(false);
   const [actionMessage, setActionMessage] = useState<{ text: string; isError: boolean } | null>(null);
@@ -138,6 +139,8 @@ export const SimpleAdminPage: React.FC = () => {
     const reg = item.registration;
     setEditUdise(reg?.school.school_code || '');
     setEditStatus(reg?.school.status || 'submitted');
+    setEditPrincipalName(reg?.school.principal_name || '');
+    setEditPrincipalPhone(reg?.school.contact_number || '');
     setEditContact(reg?.school.contact_number || reg?.mentor.phone || '');
     setEditEmail(reg?.school.school_email || reg?.mentor.email || '');
     setEditMentorName(reg?.mentor.full_name || '');
@@ -145,7 +148,7 @@ export const SimpleAdminPage: React.FC = () => {
     setEditMentorEmail(reg?.mentor.email || '');
     setEditMentorDesignation(reg?.mentor.designation || 'Faculty In-Charge');
 
-    const stus = [1, 2, 3, 4].map(num => {
+    const stus = [1, 2, 3].map(num => {
       const found = reg?.students.find(s => s.student_number === num);
       return {
         name: found?.full_name || '',
@@ -185,7 +188,8 @@ export const SimpleAdminPage: React.FC = () => {
           {
             school: {
               school_code: editUdise.trim(),
-              contact_number: editContact.trim() || editMentorPhone.trim(),
+              principal_name: editPrincipalName.trim(),
+              contact_number: editPrincipalPhone.trim() || editContact.trim() || editMentorPhone.trim(),
               school_email: editEmail.trim(),
             },
             status: editStatus,
@@ -213,10 +217,10 @@ export const SimpleAdminPage: React.FC = () => {
           district: editingItem.participatingSchool.district,
           school_code: editUdise.trim(),
           address: '',
-          city: `${editingItem.participatingSchool.district} District`,
-          principal_name: '',
+          city: editingItem.participatingSchool.district,
+          principal_name: editPrincipalName.trim(),
           school_email: editEmail.trim(),
-          contact_number: editContact.trim() || editMentorPhone.trim(),
+          contact_number: editPrincipalPhone.trim() || editContact.trim() || editMentorPhone.trim(),
           status: editStatus,
           registration_id: regId,
           submitted_at: new Date().toISOString(),
@@ -357,12 +361,9 @@ export const SimpleAdminPage: React.FC = () => {
       'Student 2 Name (Mandatory)',
       'Student 2 Reg No',
       'Student 2 Class',
-      'Student 3 Name (Mandatory)',
+      'Student 3 Name',
       'Student 3 Reg No',
       'Student 3 Class',
-      'Student 4 Name (Optional)',
-      'Student 4 Reg No',
-      'Student 4 Class',
       'Status'
     ];
 
@@ -384,9 +385,6 @@ export const SimpleAdminPage: React.FC = () => {
       `"${item.registration?.students[2]?.full_name || 'N/A'}"`,
       `"${item.registration?.students[2]?.student_registration_number || 'N/A'}"`,
       `"${item.registration?.students[2]?.class_name || 'N/A'}"`,
-      `"${item.registration?.students[3]?.full_name || 'Not Nominated'}"`,
-      `"${item.registration?.students[3]?.student_registration_number || 'N/A'}"`,
-      `"${item.registration?.students[3]?.class_name || 'N/A'}"`,
       `"${item.status}"`
     ]);
 
@@ -1024,29 +1022,22 @@ export const SimpleAdminPage: React.FC = () => {
                   <div className="space-y-3">
                     <p className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-600 flex items-center gap-2">
                       <Users className="w-4 h-4 text-purple-600" />
-                      <span>Registered Student Delegates (3 Mandatory, 4th Optional) & Uploaded Documents</span>
+                      <span>Registered Student Delegates (3 Students) & Uploaded Documents</span>
                     </p>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-                      {studentsList.map((stu, sIdx) => {
-                        const isMandatory = sIdx < 3;
-                        const isNotNominated = !isMandatory && !stu.full_name;
-
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                      {studentsList.slice(0, 3).map((stu, sIdx) => {
                         return (
                           <div
                             key={stu.id || sIdx}
-                            className={`p-5 bg-white border-2 rounded-2xl space-y-3.5 shadow-sm hover:border-purple-300 transition-all ${
-                              isNotNominated ? 'border-dashed border-slate-300 bg-slate-50/50' : 'border-slate-200'
-                            }`}
+                            className="p-5 bg-white border-2 border-slate-200 rounded-2xl space-y-3.5 shadow-sm hover:border-purple-300 transition-all"
                           >
                             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                               <span className="font-black text-xs text-slate-600 uppercase tracking-wide">
                                 Student #{sIdx + 1}
                               </span>
-                              <span className={`px-2.5 py-0.5 rounded-lg text-xs font-bold ${
-                                isMandatory ? 'bg-purple-100 text-purple-800' : 'bg-slate-200 text-slate-700'
-                              }`}>
-                                {isMandatory ? (stu.class_name || 'Mandatory') : (stu.class_name || 'Optional 4th')}
+                              <span className="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-purple-100 text-purple-800">
+                                {stu.class_name || 'Delegate'}
                               </span>
                             </div>
 
@@ -1058,19 +1049,13 @@ export const SimpleAdminPage: React.FC = () => {
                                   className="w-12 h-12 rounded-xl object-cover border-2 border-slate-200 shadow-2xs"
                                 />
                               ) : (
-                                <div className={`w-12 h-12 rounded-xl border-2 flex items-center justify-center font-black text-sm ${
-                                  isNotNominated
-                                    ? 'bg-slate-100 text-slate-400 border-slate-200'
-                                    : 'bg-purple-50 text-purple-700 border-purple-100'
-                                }`}>
+                                <div className="w-12 h-12 rounded-xl border-2 flex items-center justify-center font-black text-sm bg-purple-50 text-purple-700 border-purple-100">
                                   #{sIdx + 1}
                                 </div>
                               )}
                               <div>
-                                <p className={`font-extrabold text-sm sm:text-base leading-snug ${
-                                  isNotNominated ? 'text-slate-400 italic font-medium' : 'text-slate-900'
-                                }`}>
-                                  {stu.full_name || (isMandatory ? 'Student Name' : 'Not Nominated (Optional)')}
+                                <p className="font-extrabold text-sm sm:text-base leading-snug text-slate-900">
+                                  {stu.full_name || 'Student Name'}
                                 </p>
                                 <div className="flex flex-wrap items-center gap-2 mt-0.5">
                                   {stu.student_registration_number && (
@@ -1117,7 +1102,7 @@ export const SimpleAdminPage: React.FC = () => {
 
                               {!stu.photo_path && !stu.school_id_document_path && (
                                 <span className="text-xs text-slate-400 italic font-medium py-1">
-                                  {isNotNominated ? 'Optional slot empty' : 'No files uploaded'}
+                                  No files uploaded
                                 </span>
                               )}
                             </div>
@@ -1253,6 +1238,32 @@ export const SimpleAdminPage: React.FC = () => {
 
                   <div>
                     <label className="block text-xs font-extrabold uppercase text-slate-700 mb-1.5">
+                      Principal Full Name
+                    </label>
+                    <input
+                      type="text"
+                      value={editPrincipalName}
+                      onChange={(e) => setEditPrincipalName(e.target.value)}
+                      placeholder="e.g. Dr. / Mr. Principal Name"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold focus:outline-none focus:border-blue-600 bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-extrabold uppercase text-slate-700 mb-1.5">
+                      Principal Mobile Number
+                    </label>
+                    <input
+                      type="text"
+                      value={editPrincipalPhone}
+                      onChange={(e) => setEditPrincipalPhone(e.target.value)}
+                      placeholder="e.g. +91 98220 12345"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold focus:outline-none focus:border-blue-600 bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-extrabold uppercase text-slate-700 mb-1.5">
                       Official Contact Phone
                     </label>
                     <input
@@ -1343,22 +1354,19 @@ export const SimpleAdminPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* SECTION 3: 4 STUDENT DELEGATES */}
+              {/* SECTION 3: 3 STUDENT DELEGATES */}
               <div className="p-5 sm:p-6 bg-slate-50/80 rounded-2xl border-2 border-slate-200/80 space-y-4">
                 <p className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-700 flex items-center gap-2">
                   <Users className="w-4 h-4 text-purple-600" />
-                  <span>3. Student Delegates (3 Mandatory, 4th Optional)</span>
+                  <span>3. Student Delegates (3 Students)</span>
                 </p>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {editStudents.map((stu, idx) => {
-                    const isMandatory = idx < 3;
                     return (
                       <div
                         key={idx}
-                        className={`p-4 rounded-xl border-2 space-y-3 bg-white ${
-                          isMandatory ? 'border-slate-200' : 'border-dashed border-slate-300'
-                        }`}
+                        className="p-4 rounded-xl border-2 space-y-3 bg-white border-slate-200"
                       >
                         <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                           <span className="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
@@ -1367,22 +1375,20 @@ export const SimpleAdminPage: React.FC = () => {
                             </span>
                             <span>Student Delegate #{idx + 1}</span>
                           </span>
-                          <span className={`text-[11px] font-bold px-2 py-0.5 rounded ${
-                            isMandatory ? 'bg-purple-100 text-purple-800' : 'bg-slate-100 text-slate-600'
-                          }`}>
-                            {isMandatory ? 'Mandatory' : 'Optional (4th)'}
+                          <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-purple-100 text-purple-800">
+                            Mandatory
                           </span>
                         </div>
 
                         <div>
                           <label className="block text-[11px] font-bold uppercase text-slate-600 mb-1">
-                            Full Name {isMandatory && <span className="text-rose-500">*</span>}
+                            Full Name <span className="text-rose-500">*</span>
                           </label>
                           <input
                             type="text"
                             value={stu.name}
                             onChange={(e) => handleUpdateStudentField(idx, 'name', e.target.value)}
-                            required={isMandatory}
+                            required
                             placeholder={`Student ${idx + 1} Name`}
                             className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm font-semibold focus:outline-none focus:border-purple-600"
                           />
@@ -1391,16 +1397,18 @@ export const SimpleAdminPage: React.FC = () => {
                         <div className="grid grid-cols-2 gap-2">
                           <div>
                             <label className="block text-[11px] font-bold uppercase text-slate-600 mb-1">
-                              Class / Grade {isMandatory && <span className="text-rose-500">*</span>}
+                              Class <span className="text-rose-500">*</span>
                             </label>
-                            <input
-                              type="text"
+                            <select
                               value={stu.className}
                               onChange={(e) => handleUpdateStudentField(idx, 'className', e.target.value)}
-                              required={isMandatory}
-                              placeholder="e.g. 10-A"
-                              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm font-semibold focus:outline-none focus:border-purple-600"
-                            />
+                              required
+                              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm font-semibold focus:outline-none focus:border-purple-600 bg-white"
+                            >
+                              <option value="">-- Class --</option>
+                              <option value="8th">8th Standard</option>
+                              <option value="9th">9th Standard</option>
+                            </select>
                           </div>
 
                           <div>

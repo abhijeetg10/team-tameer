@@ -190,12 +190,12 @@ export const SchoolDashboard: React.FC = () => {
           </p>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-2xl font-black text-slate-900">{completedStudentsCount}</span>
-            <span className="text-xs font-semibold text-slate-500">/ 4 Required</span>
+            <span className="text-xs font-semibold text-slate-500">/ 3 Required</span>
           </div>
           <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2 overflow-hidden">
             <div 
               className="bg-blue-600 h-full rounded-full transition-all"
-              style={{ width: `${(completedStudentsCount / 4) * 100}%` }}
+              style={{ width: `${(completedStudentsCount / 3) * 100}%` }}
             />
           </div>
         </div>
@@ -284,15 +284,15 @@ export const SchoolDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* 4 Registered Students */}
+        {/* 3 Registered Students */}
         <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-2xs">
           <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-4 flex items-center gap-2">
             <Users className="w-4 h-4 text-blue-600" />
-            Registered Student Delegation (4 Members)
+            Registered Student Delegation (3 Members)
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {students.map((stu) => (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {students.slice(0, 3).map((stu) => (
               <div key={stu.student_number} className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-start justify-between gap-3">
                 <div className="flex items-start gap-3">
                   <img

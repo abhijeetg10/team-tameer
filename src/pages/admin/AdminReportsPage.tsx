@@ -55,8 +55,6 @@ export const AdminReportsPage: React.FC = () => {
       'Student 2 Class',
       'Student 3 Name',
       'Student 3 Class',
-      'Student 4 Name',
-      'Student 4 Class',
       'Submission Date'
     ];
 
@@ -68,7 +66,6 @@ export const AdminReportsPage: React.FC = () => {
       const stu1 = stus.find(st => st.student_number === 1);
       const stu2 = stus.find(st => st.student_number === 2);
       const stu3 = stus.find(st => st.student_number === 3);
-      const stu4 = stus.find(st => st.student_number === 4);
 
       return [
         `"${s.registration_id}"`,
@@ -88,8 +85,6 @@ export const AdminReportsPage: React.FC = () => {
         `"${stu2?.class_name || 'N/A'}"`,
         `"${stu3?.full_name || 'N/A'}"`,
         `"${stu3?.class_name || 'N/A'}"`,
-        `"${stu4?.full_name || 'N/A'}"`,
-        `"${stu4?.class_name || 'N/A'}"`,
         `"${s.submitted_at || s.created_at}"`
       ].join(',');
     });

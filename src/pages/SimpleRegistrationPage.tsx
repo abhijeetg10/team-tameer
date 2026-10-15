@@ -35,6 +35,8 @@ export const SimpleRegistrationPage: React.FC = () => {
   // School Info
   const [schoolName, setSchoolName] = useState('');
   const [schoolUdise, setSchoolUdise] = useState('');
+  const [principalName, setPrincipalName] = useState('');
+  const [principalPhone, setPrincipalPhone] = useState('');
 
   // Mentor Info
   const [mentorName, setMentorName] = useState('');
@@ -44,7 +46,7 @@ export const SimpleRegistrationPage: React.FC = () => {
   const [mentorPhoto, setMentorPhoto] = useState<string>('');
   const [mentorIdDoc, setMentorIdDoc] = useState<string>('');
 
-  // 4 Students Info
+  // 3 Students Info
   const [students, setStudents] = useState<Array<{
     name: string;
     className: string;
@@ -52,7 +54,6 @@ export const SimpleRegistrationPage: React.FC = () => {
     photo: string;
     idDoc: string;
   }>>([
-    { name: '', className: '', studentRegistrationNumber: '', photo: '', idDoc: '' },
     { name: '', className: '', studentRegistrationNumber: '', photo: '', idDoc: '' },
     { name: '', className: '', studentRegistrationNumber: '', photo: '', idDoc: '' },
     { name: '', className: '', studentRegistrationNumber: '', photo: '', idDoc: '' },
@@ -161,18 +162,10 @@ export const SimpleRegistrationPage: React.FC = () => {
       return;
     }
 
-    // Check first 3 mandatory students have full name and class
-    const mandatoryStudents = students.slice(0, 3);
-    const missingMandatory = mandatoryStudents.some(s => !s.name.trim() || !s.className.trim());
+    // Check all 3 mandatory students have full name and class
+    const missingMandatory = students.some(s => !s.name.trim() || !s.className.trim());
     if (missingMandatory) {
-      setErrorMessage('Please provide full name and class for all 3 mandatory student delegates (Student #1, #2, and #3).');
-      return;
-    }
-
-    // 4th student is optional, but if partially filled require both name and class
-    const fourthStudent = students[3];
-    if ((fourthStudent.name.trim() && !fourthStudent.className.trim()) || (!fourthStudent.name.trim() && fourthStudent.className.trim())) {
-      setErrorMessage('For Student Delegate #4 (Optional), please enter both full name and class, or leave both empty.');
+      setErrorMessage('Please provide full name and class for all 3 student delegates (Student #1, #2, and #3).');
       return;
     }
 
@@ -186,10 +179,10 @@ export const SimpleRegistrationPage: React.FC = () => {
         district: district as District,
         school_code: schoolUdise.trim(),
         address: '',
-        city: `${district} District`,
-        principal_name: '',
+        city: (district as District) || '',
+        principal_name: principalName.trim(),
         school_email: mentorEmail || user?.google_email || '',
-        contact_number: mentorPhone || '',
+        contact_number: principalPhone.trim() || mentorPhone || '',
         status: 'submitted' as const,
         registration_id: regId,
         submitted_at: new Date().toISOString(),
@@ -233,6 +226,8 @@ export const SimpleRegistrationPage: React.FC = () => {
     setSelectedSchoolId('');
     setSchoolName('');
     setSchoolUdise('');
+    setPrincipalName('');
+    setPrincipalPhone('');
     setMentorName('');
     setMentorDesignation('');
     setMentorPhone('');
@@ -240,7 +235,6 @@ export const SimpleRegistrationPage: React.FC = () => {
     setMentorPhoto('');
     setMentorIdDoc('');
     setStudents([
-      { name: '', className: '', studentRegistrationNumber: '', photo: '', idDoc: '' },
       { name: '', className: '', studentRegistrationNumber: '', photo: '', idDoc: '' },
       { name: '', className: '', studentRegistrationNumber: '', photo: '', idDoc: '' },
       { name: '', className: '', studentRegistrationNumber: '', photo: '', idDoc: '' },
@@ -271,11 +265,11 @@ export const SimpleRegistrationPage: React.FC = () => {
         school_name: schoolName,
         district: (district as District) || 'Kolhapur',
         school_code: schoolUdise,
-        address: `${district} District, Maharashtra`,
+        address: '',
         city: (district as District) || 'Kolhapur',
-        principal_name: 'Principal',
+        principal_name: principalName || 'Principal',
         school_email: mentorEmail || 'school@gkquiz2026.org',
-        contact_number: mentorPhone || '9850461062',
+        contact_number: principalPhone || mentorPhone || '9850461062',
         status: 'submitted',
         submitted_at: new Date().toISOString(),
         created_at: new Date().toISOString(),
@@ -522,7 +516,7 @@ export const SimpleRegistrationPage: React.FC = () => {
           <div className="border border-slate-200 bg-slate-50/60 rounded-3xl p-6 sm:p-7 text-left space-y-4 max-w-2xl mx-auto">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <span className="text-xs font-black uppercase tracking-wider text-slate-500">Registered Delegation Summary</span>
-              <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">4 Students + 1 Mentor</span>
+              <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">3 Students + 1 Mentor</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
@@ -530,6 +524,11 @@ export const SimpleRegistrationPage: React.FC = () => {
                 <p className="text-xs text-slate-400 font-bold uppercase">School & District</p>
                 <p className="font-bold text-slate-800">{schoolName}</p>
                 <p className="text-xs text-slate-500">{district} District {schoolUdise ? `• UDISE: ${schoolUdise}` : ''}</p>
+                {principalPhone && (
+                  <p className="text-xs text-slate-600 font-medium mt-1">
+                    Principal Contact: <strong className="text-slate-800">{principalPhone}</strong> {principalName ? `(${principalName})` : ''}
+                  </p>
+                )}
               </div>
               <div className="p-3 bg-white rounded-xl border border-slate-200">
                 <p className="text-xs text-slate-400 font-bold uppercase">Faculty Mentor</p>
@@ -668,7 +667,7 @@ export const SimpleRegistrationPage: React.FC = () => {
           </div>
           <div className="flex items-center gap-2.5">
             <span className="w-3 h-3 rounded-full bg-blue-400"></span>
-            <span>1 Faculty Mentor + 3 Mandatory Students (4th Optional)</span>
+            <span>1 Faculty Mentor + 3 Student Delegates</span>
           </div>
           <div className="flex items-center gap-2.5">
             <span className="w-3 h-3 rounded-full bg-purple-400"></span>
@@ -843,6 +842,36 @@ export const SimpleRegistrationPage: React.FC = () => {
                 Enter your school's 11-digit Unified District Information System for Education (UDISE) number as per government records.
               </p>
             </div>
+
+            {/* Principal Full Name & Principal Mobile Number */}
+            <div>
+              <label className="block text-sm sm:text-base font-extrabold text-slate-800 uppercase tracking-wider mb-2.5">
+                Principal Full Name
+              </label>
+              <input
+                type="text"
+                value={principalName}
+                onChange={(e) => setPrincipalName(e.target.value)}
+                placeholder="Dr. / Mr. / Mrs. Principal Name"
+                className="w-full px-5 py-4 rounded-2xl border-2 border-slate-300 text-base sm:text-lg font-bold text-slate-900 bg-white focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-100 shadow-sm transition-all placeholder:font-normal placeholder:text-slate-400"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm sm:text-base font-extrabold text-slate-800 uppercase tracking-wider mb-2.5 flex items-center justify-between">
+                <span>Principal Mobile Number</span>
+                <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 normal-case">
+                  Official Contact
+                </span>
+              </label>
+              <input
+                type="tel"
+                value={principalPhone}
+                onChange={(e) => setPrincipalPhone(e.target.value)}
+                placeholder="e.g. +91 98220 12345 (10-digit Mobile)"
+                className="w-full px-5 py-4 rounded-2xl border-2 border-slate-300 text-base sm:text-lg font-bold text-slate-900 bg-white focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-100 shadow-sm transition-all placeholder:font-normal placeholder:text-slate-400"
+              />
+            </div>
           </div>
         </div>
 
@@ -970,93 +999,83 @@ export const SimpleRegistrationPage: React.FC = () => {
               </div>
               <div>
                 <h2 className="text-2xl sm:text-3xl font-black text-slate-900">
-                  Student Delegates (3 Mandatory, 4th Optional)
+                  Student Delegates (3 Mandatory Delegates)
                 </h2>
                 <p className="text-sm sm:text-base text-slate-500 mt-0.5">
-                  Student delegates #1, #2, and #3 are mandatory. Student delegate #4 is optional (Reserve).
+                  All 3 student delegates are mandatory representatives for the school.
                 </p>
               </div>
             </div>
             <Users className="w-8 h-8 text-purple-600/70" />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
             {students.map((student, idx) => {
-              const isMandatory = idx < 3;
               return (
                 <div
                   key={idx}
-                  className={`p-7 sm:p-9 rounded-3xl border-2 space-y-6 transition-all shadow-sm ${isMandatory
-                      ? 'border-slate-200/90 bg-white hover:border-purple-300 hover:shadow-lg'
-                      : 'border-dashed border-slate-300 bg-slate-50/60 hover:border-purple-300 hover:bg-white hover:shadow-md'
-                    }`}
+                  className="p-7 sm:p-8 rounded-3xl border-2 space-y-6 transition-all shadow-sm border-slate-200/90 bg-white hover:border-purple-300 hover:shadow-lg"
                 >
                   <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                     <span className="text-base sm:text-lg font-black uppercase tracking-wider text-slate-900 flex items-center gap-2.5">
-                      <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black shadow-sm ${isMandatory ? 'bg-purple-600 text-white' : 'bg-slate-700 text-white'
-                        }`}>
+                      <span className="w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black shadow-sm bg-purple-600 text-white">
                         #{idx + 1}
                       </span>
                       <span>
                         Student Delegate #{idx + 1}
-                        {!isMandatory && ' (Optional)'}
                       </span>
                     </span>
-                    <span className={`text-xs sm:text-sm font-extrabold px-3 py-1 rounded-lg ${isMandatory
-                        ? 'bg-purple-100 text-purple-800 border border-purple-200'
-                        : 'bg-slate-200 text-slate-700 border border-slate-300'
-                      }`}>
-                      {isMandatory ? 'Mandatory' : 'Optional (4th)'}
+                    <span className="text-xs sm:text-sm font-extrabold px-3 py-1 rounded-lg bg-purple-100 text-purple-800 border border-purple-200">
+                      Mandatory
                     </span>
                   </div>
 
                   <div className="space-y-4">
                     <div>
                       <label className="block text-base font-bold text-slate-800 mb-2">
-                        Full Name {isMandatory ? (
-                          <span className="text-rose-500">*</span>
-                        ) : (
-                          <span className="text-slate-400 text-xs font-normal ml-1">(Optional)</span>
-                        )}
+                        Full Name <span className="text-rose-500">*</span>
                       </label>
                       <input
                         type="text"
                         value={student.name}
                         onChange={(e) => updateStudent(idx, 'name', e.target.value)}
-                        required={isMandatory}
-                        placeholder={isMandatory ? `Full Name of Student ${idx + 1}` : 'Full Name of 4th Student (Optional)'}
+                        required
+                        placeholder={`Full Name of Student ${idx + 1}`}
                         className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-300 text-base font-semibold focus:outline-none focus:border-purple-600 focus:ring-4 focus:ring-purple-100 bg-white transition-all"
                       />
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-base font-bold text-slate-800 mb-2">
-                          Class / Grade {isMandatory ? (
-                            <span className="text-rose-500">*</span>
-                          ) : (
-                            <span className="text-slate-400 text-xs font-normal ml-1">(Optional)</span>
-                          )}
+                        <label className="block text-base font-bold text-slate-800 mb-2 flex items-center justify-between">
+                          <span>
+                            Class / Standard <span className="text-rose-500">*</span>
+                          </span>
+                          <span className="text-[11px] font-extrabold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                            8th & 9th Only
+                          </span>
                         </label>
-                        <input
-                          type="text"
+                        <select
                           value={student.className}
                           onChange={(e) => updateStudent(idx, 'className', e.target.value)}
-                          required={isMandatory}
-                          placeholder={isMandatory ? 'e.g. Class 9th or Class 10th' : 'e.g. Class 9th or Class 10th (Optional)'}
-                          className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-300 text-base font-semibold focus:outline-none focus:border-purple-600 focus:ring-4 focus:ring-purple-100 bg-white transition-all"
-                        />
+                          required
+                          className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-300 text-base font-bold text-slate-900 focus:outline-none focus:border-purple-600 focus:ring-4 focus:ring-purple-100 bg-white transition-all shadow-2xs"
+                        >
+                          <option value="">-- Choose Class --</option>
+                          <option value="8th">8th Standard</option>
+                          <option value="9th">9th Standard</option>
+                        </select>
                       </div>
 
                       <div>
                         <label className="block text-base font-bold text-slate-800 mb-2">
-                          Student Reg No. <span className="text-slate-400 text-xs font-normal ml-1">(Roll / Reg ID)</span>
+                          Student Reg No. <span className="text-slate-400 text-xs font-normal ml-1">(Roll No)</span>
                         </label>
                         <input
                           type="text"
                           value={student.studentRegistrationNumber}
                           onChange={(e) => updateStudent(idx, 'studentRegistrationNumber', e.target.value)}
-                          placeholder={isMandatory ? `e.g. REG-0${idx + 1} / Roll No` : 'Registration No (Optional)'}
+                          placeholder={`e.g. REG-0${idx + 1} / Roll No`}
                           className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-300 text-base font-semibold focus:outline-none focus:border-purple-600 focus:ring-4 focus:ring-purple-100 bg-white transition-all"
                         />
                       </div>
@@ -1067,7 +1086,7 @@ export const SimpleRegistrationPage: React.FC = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t-2 border-slate-100">
                     <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-2">
                       <label className="block text-sm font-bold text-slate-800">
-                        Student Photo {!isMandatory && <span className="text-slate-400 text-xs font-normal">(Opt.)</span>}
+                        Student Photo
                       </label>
                       {student.photo ? (
                         <div className="flex items-center gap-2.5 p-2 bg-slate-50 rounded-xl border border-slate-200 shadow-2xs">
@@ -1087,7 +1106,7 @@ export const SimpleRegistrationPage: React.FC = () => {
 
                     <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-2">
                       <label className="block text-sm font-bold text-slate-800">
-                        School ID / Proof {!isMandatory && <span className="text-slate-400 text-xs font-normal">(Opt.)</span>}
+                        School ID / Proof
                       </label>
                       {student.idDoc ? (
                         <div className="flex items-center gap-2.5 p-2 bg-slate-50 rounded-xl border border-slate-200 shadow-2xs">

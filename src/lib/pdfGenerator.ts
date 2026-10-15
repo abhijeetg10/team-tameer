@@ -4,31 +4,77 @@ import { FullSchoolRegistration } from '../types';
 const imageCache = new Map<string, string>();
 
 /**
+ * Converts any non-JPEG/PNG data URL (like WebP, GIF, SVG) to a standard JPEG Data URL
+ * so jsPDF's addImage will never throw an unknown format error.
+ */
+const convertToJpegDataUrl = (dataUrl: string): Promise<string> => {
+  return new Promise((resolve) => {
+    if (!dataUrl || !dataUrl.startsWith('data:image')) {
+      resolve(dataUrl);
+      return;
+    }
+    // If it's already JPEG or PNG, jsPDF supports it natively
+    if (
+      dataUrl.startsWith('data:image/jpeg') ||
+      dataUrl.startsWith('data:image/jpg') ||
+      dataUrl.startsWith('data:image/png')
+    ) {
+      resolve(dataUrl);
+      return;
+    }
+
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || img.width;
+        canvas.height = img.naturalHeight || img.height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL('image/jpeg', 0.92));
+          return;
+        }
+      } catch (_) {}
+      resolve(dataUrl);
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+};
+
+/**
  * Robustly load and convert any image URL (local or remote) to a base64 Data URL
  */
 export const ensureBase64Image = async (src: string | undefined): Promise<string> => {
   if (!src || typeof src !== 'string' || !src.trim()) return '';
   const trimmed = src.trim();
-  if (trimmed.startsWith('data:image')) {
-    return trimmed;
-  }
+
   if (imageCache.has(trimmed)) {
     return imageCache.get(trimmed)!;
+  }
+
+  if (trimmed.startsWith('data:image')) {
+    const safeDataUrl = await convertToJpegDataUrl(trimmed);
+    imageCache.set(trimmed, safeDataUrl);
+    return safeDataUrl;
   }
 
   try {
     const res = await fetch(trimmed);
     if (res.ok) {
       const blob = await res.blob();
-      const base64 = await new Promise<string>((resolve) => {
+      const rawBase64 = await new Promise<string>((resolve) => {
         const reader = new FileReader();
         reader.onloadend = () => resolve((reader.result as string) || '');
         reader.onerror = () => resolve('');
         reader.readAsDataURL(blob);
       });
-      if (base64) {
-        imageCache.set(trimmed, base64);
-        return base64;
+      if (rawBase64) {
+        const safeBase64 = await convertToJpegDataUrl(rawBase64);
+        imageCache.set(trimmed, safeBase64);
+        return safeBase64;
       }
     }
   } catch (_) {}
@@ -44,7 +90,7 @@ export const ensureBase64Image = async (src: string | undefined): Promise<string
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.drawImage(img, 0, 0);
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
           imageCache.set(trimmed, dataUrl);
           resolve(dataUrl);
           return;
@@ -94,13 +140,28 @@ export const generateAcknowledgementPDF = async (registration: FullSchoolRegistr
 
   const pageWidth = 595.28;
 
+  // Normalize student delegates to always guarantee 3 slots
+  const normalizedStudents = [0, 1, 2].map((i) => {
+    return (
+      students?.[i] || {
+        id: `stu-${i + 1}`,
+        school_id: school.id,
+        student_number: i + 1,
+        full_name: '',
+        class_name: '',
+        student_registration_number: '',
+        photo_path: '',
+      }
+    );
+  });
+
   // Load all images in parallel: Team Tameer logo, Conclave/Partner logo, RO Softwares logo, mentor photo, and student photos
   const [logoData, partnerLogoData, roLogoData, mentorPhotoData, ...studentsPhotosData] = await Promise.all([
     ensureBase64Image('/logo.png'),
-    ensureBase64Image('/logo2.jpeg').then(res => res || ensureBase64Image('/ROLogo.jpeg')),
+    ensureBase64Image('/logo2.jpeg').then((res) => res || ensureBase64Image('/ROLogo.jpeg')),
     ensureBase64Image('/ROLogo.jpeg'),
-    ensureBase64Image(mentor.photo_path),
-    ...students.map((s) => ensureBase64Image(s.photo_path)),
+    ensureBase64Image(mentor?.photo_path),
+    ...normalizedStudents.map((s) => ensureBase64Image(s.photo_path)),
   ]);
 
   // Exact ReportLab Template Palette
@@ -230,17 +291,31 @@ export const generateAcknowledgementPDF = async (registration: FullSchoolRegistr
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
   doc.setTextColor(navy[0], navy[1], navy[2]);
-  doc.text(school.school_name || 'N/A', 135, 262);
+  doc.text(school.school_name || 'N/A', 135, 262, { maxWidth: 420 });
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
   doc.setTextColor(slate[0], slate[1], slate[2]);
-  doc.text('District / Address', 40, 280);
+  doc.text('District / Location', 40, 280);
 
   doc.setFontSize(9);
   doc.setTextColor(navy[0], navy[1], navy[2]);
-  const districtAddress = `${school.district ? `${school.district} District / ` : ''}${school.city || ''} ${school.address || '______________________________'}`;
-  doc.text(districtAddress, 135, 280);
+  // Format clean district and address without repeating district name
+  const rawDistrict = (school.district || '').trim();
+  const rawCity = (school.city || '').trim();
+  const rawAddr = (school.address || '').trim();
+
+  const districtName = rawDistrict ? `${rawDistrict} District` : '';
+  const cityName = rawCity && rawCity.toLowerCase() !== rawDistrict.toLowerCase() && !rawCity.toLowerCase().includes(`${rawDistrict.toLowerCase()} district`)
+    ? rawCity
+    : '';
+  const addrName = rawAddr && rawAddr.toLowerCase() !== rawDistrict.toLowerCase() && !rawAddr.toLowerCase().includes(`${rawDistrict.toLowerCase()} district`)
+    ? rawAddr
+    : '';
+
+  const locItems = [districtName, cityName, addrName].filter(Boolean);
+  const districtAddress = locItems.length > 0 ? locItems.join('  •  ') : (districtName || 'N/A');
+  doc.text(districtAddress, 135, 280, { maxWidth: 420 });
 
   doc.setFontSize(7);
   doc.setTextColor(slate[0], slate[1], slate[2]);
@@ -248,18 +323,20 @@ export const generateAcknowledgementPDF = async (registration: FullSchoolRegistr
 
   doc.setFontSize(9);
   doc.setTextColor(navy[0], navy[1], navy[2]);
-  doc.text(school.principal_name || '________________________', 135, 298);
+  doc.text(school.principal_name || '________________________', 135, 298, { maxWidth: 200 });
 
   doc.setFontSize(8);
   doc.text(`School Code / UDISE: ${school.school_code || 'N/A'}`, 345, 298);
 
   doc.setFontSize(7);
   doc.setTextColor(slate[0], slate[1], slate[2]);
-  doc.text('Email / Contact', 40, 316);
+  doc.text('Principal Mobile / Email', 40, 316);
 
   doc.setFontSize(9);
   doc.setTextColor(navy[0], navy[1], navy[2]);
-  doc.text(`${school.school_email || 'N/A'}  |  ${school.contact_number || 'N/A'}`, 135, 316);
+  const contactText = school.contact_number ? `Mobile: ${school.contact_number}` : 'Mobile: —';
+  const emailText = school.school_email ? `Email: ${school.school_email}` : '';
+  doc.text([contactText, emailText].filter(Boolean).join('  |  '), 135, 316, { maxWidth: 420 });
 
   // 6. SECTION 02: DESIGNATED FACULTY MENTOR (y = 326, h = 23)
   doc.setFillColor(bgTeal[0], bgTeal[1], bgTeal[2]);
@@ -296,7 +373,7 @@ export const generateAcknowledgementPDF = async (registration: FullSchoolRegistr
 
   doc.setFontSize(12);
   doc.setTextColor(navy[0], navy[1], navy[2]);
-  doc.text(mentor.full_name || 'N/A', 121, 392);
+  doc.text(mentor.full_name || 'N/A', 121, 392, { maxWidth: 300 });
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
@@ -319,18 +396,17 @@ export const generateAcknowledgementPDF = async (registration: FullSchoolRegistr
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
   doc.setTextColor(teal[0], teal[1], teal[2]);
-  doc.text('03  STUDENT DELEGATES  |  3 MANDATORY + 1 OPTIONAL', 40, 464);
+  doc.text('03  STUDENT DELEGATES  |  3 MANDATORY DELEGATES', 40, 464);
 
-  // 4 Student Cards side by side
-  // Card 1: x=30 | Card 2: x=167 | Card 3: x=304 | Card 4: x=441 (Width = 124, Height = 164)
-  const cardXCoords = [30, 167, 304, 441];
-  const cardW = 124;
+  // 3 Student Cards side by side across width 535
+  // Card 1: x=30 | Card 2: x=214 | Card 3: x=398 (Width = 167, Height = 164)
+  const cardXCoords = [30, 214, 398];
+  const cardW = 167;
   const cardH = 164;
   const cardY = 486;
 
-  students.forEach((stu, index) => {
+  normalizedStudents.forEach((stu, index) => {
     const cX = cardXCoords[index];
-    const isOptional = index === 3;
     const hasName = Boolean(stu.full_name && stu.full_name.trim());
     const stuPhotoData = studentsPhotosData[index] || '';
 
@@ -340,11 +416,11 @@ export const generateAcknowledgementPDF = async (registration: FullSchoolRegistr
     doc.setDrawColor(lineGray[0], lineGray[1], lineGray[2]);
     doc.roundedRect(cX, cardY, cardW, cardH, 4, 4, 'D');
 
-    // Inner Photo Box (x=cX+27, y=497, w=70, h=85)
-    const photoX = cX + 27;
-    const photoY = cardY + 11;
-    const photoW = 70;
+    // Inner Photo Box (centered in card, w=74, h=85)
+    const photoW = 74;
     const photoH = 85;
+    const photoX = cX + (cardW - photoW) / 2;
+    const photoY = cardY + 11;
 
     doc.setFillColor(bgCard[0], bgCard[1], bgCard[2]);
     doc.roundedRect(photoX, photoY, photoW, photoH, 4, 4, 'FD');
@@ -355,32 +431,32 @@ export const generateAcknowledgementPDF = async (registration: FullSchoolRegistr
     if (!photoDone) {
       // Draw Template Avatar placeholder
       doc.setDrawColor(avatarBorder[0], avatarBorder[1], avatarBorder[2]);
-      doc.circle(photoX + 35, photoY + 28, 9, 'S');
-      doc.line(photoX + 18, photoY + 48, photoX + 52, photoY + 48);
+      doc.circle(photoX + 37, photoY + 28, 9, 'S');
+      doc.line(photoX + 20, photoY + 48, photoX + 54, photoY + 48);
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(6.2);
+      doc.setFontSize(6.5);
       doc.setTextColor(slate[0], slate[1], slate[2]);
-      doc.text('STUDENT PHOTO', photoX + 7, photoY + 68);
+      doc.text('STUDENT PHOTO', photoX + 9, photoY + 68);
     }
 
     // Student Info Below Photo
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
+    doc.setFontSize(9.5);
     doc.setTextColor(navy[0], navy[1], navy[2]);
     const numPrefix = `0${index + 1}  `;
-    const sName = hasName ? stu.full_name : isOptional ? 'Not Nominated' : 'Pending';
-    doc.text(`${numPrefix}${sName}`, cX + 10, cardY + 112);
+    const sName = hasName ? stu.full_name : 'Pending';
+    doc.text(`${numPrefix}${sName}`, cX + 12, cardY + 112, { maxWidth: 143 });
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     const regText = stu.student_registration_number ? `Roll no. ${stu.student_registration_number}` : 'Roll no. —';
     const classText = stu.class_name ? `Class ${stu.class_name}` : 'Class —';
-    doc.text(`${regText}  |  ${classText}`, cX + 10, cardY + 129);
+    doc.text(`${regText}  |  ${classText}`, cX + 12, cardY + 129, { maxWidth: 143 });
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7);
+    doc.setFontSize(7.5);
     doc.setTextColor(teal[0], teal[1], teal[2]);
-    doc.text(isOptional ? 'Optional delegate' : 'Mandatory delegate', cX + 10, cardY + 147);
+    doc.text('Mandatory delegate', cX + 12, cardY + 147);
   });
 
   // 8. MANDATORY EVENT ACCREDITATION INSTRUCTIONS (y = 667)
