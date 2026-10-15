@@ -591,82 +591,99 @@ export const SimpleAdminPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
       {/* Top Header Card */}
-      <div className="bg-white rounded-3xl border-2 border-slate-200 p-6 sm:p-9 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="flex items-center gap-5">
-          <div className="flex items-center gap-3 p-2.5 bg-slate-50 rounded-2xl border border-slate-200 shrink-0">
-            <img src="/logo.png" alt="Team Tameer Logo" className="h-16 w-16 sm:h-20 sm:w-20 object-contain" />
-            <img src="/logo2.jpeg" alt="Event Logo" className="h-16 w-16 sm:h-20 sm:w-20 object-contain rounded-xl" />
-          </div>
-          <div>
-            <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
-                State-Level GK Quiz Contest 2026 Admin Panel
-              </h1>
-              <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border ${
-                isSuper 
-                  ? 'bg-amber-100 text-amber-900 border-amber-300' 
-                  : 'bg-purple-100 text-purple-800 border-purple-200'
-              }`}>
-                {isSuper ? '★ Super Admin Console' : 'Admin Console'}
-              </span>
+      <div className="bg-white rounded-3xl border-2 border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
+        {/* Row 1: Brand, Title, and Authenticated User */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-100">
+          <div className="flex items-center gap-4 sm:gap-5 min-w-0">
+            <div className="flex items-center gap-2.5 p-2 bg-slate-50 rounded-2xl border border-slate-200 shrink-0">
+              <img src="/logo.png" alt="Team Tameer Logo" className="h-14 w-14 sm:h-16 sm:w-16 object-contain" />
+              <img src="/logo2.jpeg" alt="Event Logo" className="h-14 w-14 sm:h-16 sm:w-16 object-contain rounded-xl" />
             </div>
-            <p className="text-sm sm:text-base text-slate-600 mt-1 font-medium flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>Logged in as: <strong className="text-slate-900 font-bold">{user.google_email}</strong></span>
-            </p>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
+                  State-Level GK Quiz Contest 2026 Admin Panel
+                </h1>
+                <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border shrink-0 ${
+                  isSuper 
+                    ? 'bg-amber-100 text-amber-900 border-amber-300' 
+                    : 'bg-purple-100 text-purple-800 border-purple-200'
+                }`}>
+                  {isSuper ? '★ Super Admin Console' : 'Admin Console'}
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1.5 font-medium flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                <span>Logged in as: <strong className="text-slate-800 font-bold">{user.google_email}</strong></span>
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0 self-start lg:self-center">
+            <button
+              type="button"
+              onClick={() => logout()}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-slate-600 text-xs sm:text-sm font-bold transition-all cursor-pointer"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Switch Account / Sign Out</span>
+            </button>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 shrink-0">
-          {/* Super Admin Control Button */}
-          {isSuper && (
+        {/* Row 2: Action Toolbar & Controls */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-2.5 text-xs sm:text-sm font-bold text-slate-600">
+            <span className="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-800">
+              36 Institutions Roster
+            </span>
+            <span className="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800">
+              {submittedCount} Submitted Applications
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Super Admin Control Button */}
+            {isSuper && (
+              <button
+                type="button"
+                onClick={() => setShowManageAdmins(!showManageAdmins)}
+                className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 shadow-sm cursor-pointer"
+              >
+                <Settings className="w-4 h-4" />
+                <span>Manage Admin Access ({adminList.length})</span>
+                {showManageAdmins ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </button>
+            )}
+
             <button
               type="button"
-              onClick={() => setShowManageAdmins(!showManageAdmins)}
-              className="px-5 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl text-sm font-extrabold transition-all flex items-center gap-2 shadow-md cursor-pointer"
+              onClick={loadSchools}
+              className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer shadow-2xs"
             >
-              <Settings className="w-4 h-4" />
-              <span>Manage Admin Access ({adminList.length})</span>
-              {showManageAdmins ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <span>Refresh</span>
             </button>
-          )}
+            
+            <button
+              type="button"
+              onClick={handleExportCSV}
+              className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 shadow-sm cursor-pointer active:scale-98"
+            >
+              <Download className="w-4 h-4 text-amber-400" />
+              <span>Export CSV</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={loadSchools}
-            className="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl text-sm font-extrabold transition-all flex items-center gap-2 cursor-pointer shadow-2xs"
-          >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-            <span>Refresh</span>
-          </button>
-          
-          <button
-            type="button"
-            onClick={handleExportCSV}
-            className="px-5 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-sm font-extrabold transition-all flex items-center gap-2 shadow-md cursor-pointer active:scale-98"
-          >
-            <Download className="w-4 h-4 text-amber-400" />
-            <span>Export to CSV</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleDownloadAllPDFs}
-            className="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-sm font-extrabold transition-all flex items-center gap-2 shadow-md cursor-pointer active:scale-98"
-            title="Download complete registration forms & passes for all submitted schools"
-          >
-            <FileText className="w-4 h-4 text-emerald-200" />
-            <span>Download All Forms (PDF)</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => logout()}
-            className="px-4 py-3 border border-slate-300 hover:bg-slate-100 text-slate-600 rounded-2xl text-sm font-bold transition-all cursor-pointer"
-            title="Sign Out"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
+            <button
+              type="button"
+              onClick={handleDownloadAllPDFs}
+              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 shadow-sm cursor-pointer active:scale-98"
+              title="Download complete registration forms & passes for all submitted schools"
+            >
+              <FileText className="w-4 h-4 text-emerald-200" />
+              <span>Download All Forms (PDF)</span>
+            </button>
+          </div>
         </div>
       </div>
 
