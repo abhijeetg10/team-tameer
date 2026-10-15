@@ -48,11 +48,18 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* Developer Credit */}
-          <div className="flex items-center gap-2 text-slate-400 text-xs shrink-0">
+          <div className="flex items-center gap-2.5 text-slate-400 text-xs shrink-0">
             <span>Developed by</span>
-            <span className="font-bold text-amber-400 bg-slate-800 px-3 py-1 rounded-lg border border-slate-700 shadow-2xs text-xs tracking-wide">
-              RECPRO Rehan Chougale
-            </span>
+            <div className="flex items-center gap-2 bg-slate-800/90 pl-1.5 pr-3 py-1 rounded-xl border border-slate-700 shadow-2xs">
+              <img 
+                src="/ROLogo.jpeg" 
+                alt="RECPRO Logo" 
+                className="w-7 h-7 object-contain rounded-lg bg-white p-0.5 border border-slate-600"
+              />
+              <span className="font-bold text-amber-400 text-xs tracking-wide">
+                RECPRO Rehan Chougale
+              </span>
+            </div>
           </div>
         </div>
 
