@@ -531,9 +531,9 @@ export const SimpleRegistrationPage: React.FC = () => {
                 className="w-full px-5 py-4 rounded-2xl border-2 border-slate-300 text-base sm:text-lg font-bold text-slate-900 bg-white focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-100 shadow-sm transition-all"
               >
                 <option value="">-- Choose District --</option>
-                <option value="Kolhapur">Kolhapur District (16 Participating Schools)</option>
-                <option value="Sangli">Sangli District (12 Participating Schools)</option>
-                <option value="Satara">Satara District (8 Participating Schools)</option>
+                <option value="Kolhapur">Kolhapur District</option>
+                <option value="Sangli">Sangli District</option>
+                <option value="Satara">Satara District</option>
               </select>
             </div>
 

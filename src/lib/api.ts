@@ -15,6 +15,9 @@ import {
 } from '../types';
 
 export const OFFICIAL_PARTICIPATING_SCHOOLS: ParticipatingSchool[] = [
+  // Demo Institution for Platform Testing
+  { id: 'ps-demo-01', school_name: 'Demo Model High School & Jr. College', district: 'Kolhapur', is_active: true, created_at: '2026-09-01T00:00:00Z' },
+
   // District: Kolhapur (16 Schools)
   { id: 'ps-kol-01', school_name: 'Urdu High School Chandgadh', district: 'Kolhapur', is_active: true, created_at: '2026-09-01T00:00:00Z' },
   { id: 'ps-kol-02', school_name: 'Dr. Zakir Husain Anglo Urdu High School & Jr. College Aajra', district: 'Kolhapur', is_active: true, created_at: '2026-09-01T00:00:00Z' },
@@ -77,8 +80,93 @@ const INITIAL_EVENT_SETTINGS: EventSettings = {
   ]
 };
 
-// Clean Production State: No dummy pre-registered schools
-const SEED_SCHOOLS: FullSchoolRegistration[] = [];
+// Seed Data with Demo School for Platform Testing & Verification
+const SEED_SCHOOLS: FullSchoolRegistration[] = [
+  {
+    school: {
+      id: 'sch-demo-01',
+      registration_id: 'GKQ-2026-DEMO',
+      participating_school_id: 'ps-demo-01',
+      school_name: 'Demo Model High School & Jr. College',
+      district: 'Kolhapur',
+      school_code: '27280109999',
+      address: 'Station Road, Near Central Plaza',
+      city: 'Kolhapur',
+      principal_name: 'Dr. Ramesh S. Kulkarni',
+      school_email: 'principal.demo@school.edu.in',
+      contact_number: '+91 98220 12345',
+      logo_path: '',
+      status: 'submitted',
+      registered_by_user_id: 'user-demo-admin',
+      is_representative_verified: true,
+      submitted_at: '2026-10-15T10:00:00Z',
+      created_at: '2026-10-15T09:30:00Z',
+      updated_at: '2026-10-15T10:00:00Z'
+    },
+    mentor: {
+      id: 'men-demo-01',
+      school_id: 'sch-demo-01',
+      full_name: 'Prof. Rajesh V. Patil',
+      phone: '+91 98765 43210',
+      email: 'rajesh.patil@demo-school.edu.in',
+      designation: 'Senior Faculty / Quiz Coordinator',
+      photo_path: '',
+      id_document_path: '',
+      created_at: '2026-10-15T09:30:00Z'
+    },
+    students: [
+      {
+        id: 'stu-demo-01',
+        school_id: 'sch-demo-01',
+        student_number: 1,
+        full_name: 'Aarav Rajesh Patil',
+        class_name: 'Class 10-A',
+        student_registration_number: 'REG-2026-001',
+        photo_path: '',
+        school_id_document_path: '',
+        identity_document_type: 'school_id',
+        created_at: '2026-10-15T09:30:00Z'
+      },
+      {
+        id: 'stu-demo-02',
+        school_id: 'sch-demo-01',
+        student_number: 2,
+        full_name: 'Zoya Farhan Sayyed',
+        class_name: 'Class 10-B',
+        student_registration_number: 'REG-2026-002',
+        photo_path: '',
+        school_id_document_path: '',
+        identity_document_type: 'school_id',
+        created_at: '2026-10-15T09:30:00Z'
+      },
+      {
+        id: 'stu-demo-03',
+        school_id: 'sch-demo-01',
+        student_number: 3,
+        full_name: 'Samarth Vinayak Joshi',
+        class_name: 'Class 9-A',
+        student_registration_number: 'REG-2026-003',
+        photo_path: '',
+        school_id_document_path: '',
+        identity_document_type: 'school_id',
+        created_at: '2026-10-15T09:30:00Z'
+      },
+      {
+        id: 'stu-demo-04',
+        school_id: 'sch-demo-01',
+        student_number: 4,
+        full_name: 'Ananya Prakash Deshmukh',
+        class_name: 'Class 9-B',
+        student_registration_number: 'REG-2026-004',
+        photo_path: '',
+        school_id_document_path: '',
+        identity_document_type: 'school_id',
+        created_at: '2026-10-15T09:30:00Z'
+      }
+    ],
+    reviews: []
+  }
+];
 
 const STORAGE_KEYS = {
   MASTER_SCHOOLS: 'school_event_master_participating_schools_live',
@@ -89,13 +177,32 @@ const STORAGE_KEYS = {
 
 // Initialize Storage with Seed Data if empty or missing new schools
 function initializeLocalStorage() {
-  const existingMaster = localStorage.getItem(STORAGE_KEYS.MASTER_SCHOOLS);
-  if (!existingMaster || JSON.parse(existingMaster).length < OFFICIAL_PARTICIPATING_SCHOOLS.length) {
-    localStorage.setItem(STORAGE_KEYS.MASTER_SCHOOLS, JSON.stringify(OFFICIAL_PARTICIPATING_SCHOOLS));
+  const existingMasterRaw = localStorage.getItem(STORAGE_KEYS.MASTER_SCHOOLS);
+  let masterList: ParticipatingSchool[] = existingMasterRaw ? JSON.parse(existingMasterRaw) : [];
+  let masterUpdated = false;
+  for (const s of OFFICIAL_PARTICIPATING_SCHOOLS) {
+    if (!masterList.some(m => m.id === s.id)) {
+      masterList.push(s);
+      masterUpdated = true;
+    }
   }
-  if (!localStorage.getItem(STORAGE_KEYS.SCHOOLS)) {
-    localStorage.setItem(STORAGE_KEYS.SCHOOLS, JSON.stringify(SEED_SCHOOLS));
+  if (masterUpdated || !existingMasterRaw) {
+    localStorage.setItem(STORAGE_KEYS.MASTER_SCHOOLS, JSON.stringify(masterList));
   }
+
+  const existingSchoolsRaw = localStorage.getItem(STORAGE_KEYS.SCHOOLS);
+  let schoolsList: FullSchoolRegistration[] = existingSchoolsRaw ? JSON.parse(existingSchoolsRaw) : [];
+  let schoolsUpdated = false;
+  for (const seed of SEED_SCHOOLS) {
+    if (!schoolsList.some(s => s.school.participating_school_id === seed.school.participating_school_id || s.school.id === seed.school.id)) {
+      schoolsList.push(seed);
+      schoolsUpdated = true;
+    }
+  }
+  if (schoolsUpdated || !existingSchoolsRaw) {
+    localStorage.setItem(STORAGE_KEYS.SCHOOLS, JSON.stringify(schoolsList));
+  }
+
   if (!localStorage.getItem(STORAGE_KEYS.SETTINGS)) {
     localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(INITIAL_EVENT_SETTINGS));
   }

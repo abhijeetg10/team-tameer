@@ -251,6 +251,8 @@ CREATE POLICY "Everyone can view event settings" ON public.event_settings
 -- SEED DATA: OFFICIAL 34 PARTICIPATING SCHOOLS
 -- ==========================================================
 INSERT INTO public.participating_schools (school_name, district) VALUES
+-- Demo Institution for Platform Testing
+('Demo Model High School & Jr. College', 'Kolhapur'),
 -- District: Kolhapur (16 Schools)
 ('Urdu High School Chandgadh', 'Kolhapur'),
 ('Dr. Zakir Husain Anglo Urdu High School & Jr. College Aajra', 'Kolhapur'),
