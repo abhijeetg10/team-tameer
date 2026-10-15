@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  Building2, 
-  UserCheck, 
-  Users, 
-  CheckCircle2, 
-  AlertCircle, 
-  Sparkles, 
+import {
+  Building2,
+  UserCheck,
+  Users,
+  CheckCircle2,
+  AlertCircle,
+  Sparkles,
   FileText,
   LogOut,
   ArrowLeft,
@@ -30,7 +30,7 @@ export const SimpleRegistrationPage: React.FC = () => {
   const [district, setDistrict] = useState<District | ''>('');
   const [schoolsList, setSchoolsList] = useState<ParticipatingSchool[]>([]);
   const [selectedSchoolId, setSelectedSchoolId] = useState<string>('');
-  
+
   // School Info
   const [schoolName, setSchoolName] = useState('');
   const [schoolUdise, setSchoolUdise] = useState('');
@@ -349,7 +349,7 @@ export const SimpleRegistrationPage: React.FC = () => {
                   </p>
                 </div>
               </div>
-              
+
               <div className="bg-white/90 p-3 sm:p-4 rounded-xl border border-amber-200 text-xs text-slate-700 space-y-2">
                 <p className="font-bold text-amber-950">How to fix this in your Supabase Dashboard:</p>
                 <ol className="list-decimal pl-4 space-y-1.5 leading-relaxed">
@@ -357,7 +357,7 @@ export const SimpleRegistrationPage: React.FC = () => {
                     Go to <strong>Google Cloud Console &gt; Credentials &gt; OAuth 2.0 Client IDs</strong>
                   </li>
                   <li>
-                    Check <strong>Authorized redirect URIs</strong> is set to: <br/>
+                    Check <strong>Authorized redirect URIs</strong> is set to: <br />
                     <code className="text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded font-mono select-all">https://dfmsrevoyldpwkhsypud.supabase.co/auth/v1/callback</code>
                   </li>
                   <li>
@@ -385,10 +385,10 @@ export const SimpleRegistrationPage: React.FC = () => {
           )}
 
           <div className="pt-2 flex flex-col items-center justify-center gap-4">
-            <GoogleSignInButton 
-              size="xl" 
-              buttonText="Sign in with Google to Continue" 
-              redirectTo="/register" 
+            <GoogleSignInButton
+              size="xl"
+              buttonText="Sign in with Google to Continue"
+              redirectTo="/register"
               className="w-full sm:w-auto"
             />
 
@@ -493,11 +493,11 @@ export const SimpleRegistrationPage: React.FC = () => {
               <FileText className="w-4 h-4 text-emerald-700" />
               <span>Official Delegate Pass & Form</span>
             </div>
-            
+
             <h3 className="text-xl sm:text-2xl font-black text-slate-900">
               Download Registration Form (PDF)
             </h3>
-            
+
             <p className="text-xs sm:text-sm text-slate-700 max-w-lg mx-auto leading-relaxed">
               Click below to download the official stamped registration acknowledgement and delegate pass. Contains full school details, mentor credentials, and 4 student delegates with registration numbers.
             </p>
@@ -630,15 +630,15 @@ export const SimpleRegistrationPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 sm:gap-8">
             {/* Large Logos side by side */}
             <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md p-4 rounded-3xl border border-white/20 shadow-xl shrink-0">
-              <img 
-                src="/logo.png" 
-                alt="Team Tameer Logo" 
-                className="h-24 w-24 sm:h-28 sm:w-28 object-contain rounded-2xl bg-white p-1.5" 
+              <img
+                src="/logo.png"
+                alt="Team Tameer Logo"
+                className="h-24 w-24 sm:h-28 sm:w-28 object-contain rounded-2xl bg-white p-1.5"
               />
-              <img 
-                src="/logo2.jpeg" 
-                alt="Event Logo" 
-                className="h-24 w-24 sm:h-28 sm:w-28 object-contain rounded-2xl bg-white p-1.5" 
+              <img
+                src="/logo2.jpeg"
+                alt="Event Logo"
+                className="h-24 w-24 sm:h-28 sm:w-28 object-contain rounded-2xl bg-white p-1.5"
               />
             </div>
 
@@ -921,7 +921,7 @@ export const SimpleRegistrationPage: React.FC = () => {
           {/* Mentor Photo & Document Upload */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
             <div className="p-6 bg-slate-50 border-2 border-slate-200 rounded-3xl space-y-3">
-              <span className="block text-base font-bold text-slate-800">Mentor Passport Photo</span>
+              <span className="block text-base font-bold text-slate-800">Mentor Photo</span>
               {mentorPhoto ? (
                 <div className="flex items-center gap-4 p-2 bg-white rounded-2xl border border-slate-200 shadow-2xs">
                   <img src={mentorPhoto} alt="Mentor" className="w-16 h-16 object-cover rounded-xl border border-slate-300 shadow-2xs" />
@@ -981,19 +981,17 @@ export const SimpleRegistrationPage: React.FC = () => {
             {students.map((student, idx) => {
               const isMandatory = idx < 3;
               return (
-                <div 
+                <div
                   key={idx}
-                  className={`p-7 sm:p-9 rounded-3xl border-2 space-y-6 transition-all shadow-sm ${
-                    isMandatory
+                  className={`p-7 sm:p-9 rounded-3xl border-2 space-y-6 transition-all shadow-sm ${isMandatory
                       ? 'border-slate-200/90 bg-white hover:border-purple-300 hover:shadow-lg'
                       : 'border-dashed border-slate-300 bg-slate-50/60 hover:border-purple-300 hover:bg-white hover:shadow-md'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                     <span className="text-base sm:text-lg font-black uppercase tracking-wider text-slate-900 flex items-center gap-2.5">
-                      <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black shadow-sm ${
-                        isMandatory ? 'bg-purple-600 text-white' : 'bg-slate-700 text-white'
-                      }`}>
+                      <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black shadow-sm ${isMandatory ? 'bg-purple-600 text-white' : 'bg-slate-700 text-white'
+                        }`}>
                         #{idx + 1}
                       </span>
                       <span>
@@ -1001,11 +999,10 @@ export const SimpleRegistrationPage: React.FC = () => {
                         {!isMandatory && ' (Optional)'}
                       </span>
                     </span>
-                    <span className={`text-xs sm:text-sm font-extrabold px-3 py-1 rounded-lg ${
-                      isMandatory
+                    <span className={`text-xs sm:text-sm font-extrabold px-3 py-1 rounded-lg ${isMandatory
                         ? 'bg-purple-100 text-purple-800 border border-purple-200'
                         : 'bg-slate-200 text-slate-700 border border-slate-300'
-                    }`}>
+                      }`}>
                       {isMandatory ? 'Mandatory' : 'Optional (4th)'}
                     </span>
                   </div>
@@ -1153,11 +1150,10 @@ export const SimpleRegistrationPage: React.FC = () => {
           <button
             type="submit"
             disabled={isSubmitting || Boolean(alreadyRegisteredSchool)}
-            className={`w-full lg:w-auto px-10 py-5 text-lg font-black rounded-2xl shadow-xl transition-all flex items-center justify-center gap-3 shrink-0 ${
-              alreadyRegisteredSchool
+            className={`w-full lg:w-auto px-10 py-5 text-lg font-black rounded-2xl shadow-xl transition-all flex items-center justify-center gap-3 shrink-0 ${alreadyRegisteredSchool
                 ? 'bg-amber-500 text-white cursor-not-allowed opacity-90'
                 : 'bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white hover:shadow-2xl cursor-pointer disabled:opacity-50'
-            }`}
+              }`}
           >
             {isSubmitting ? (
               <span>Submitting Registration...</span>

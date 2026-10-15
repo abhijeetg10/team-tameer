@@ -1,7 +1,51 @@
 import jsPDF from 'jspdf';
 import { FullSchoolRegistration } from '../types';
 
-export const generateAcknowledgementPDF = (registration: FullSchoolRegistration) => {
+let cachedLogo2Base64: string | null = null;
+
+const loadLogo2AsBase64 = async (): Promise<string> => {
+  if (cachedLogo2Base64) return cachedLogo2Base64;
+  try {
+    const res = await fetch('/logo2.jpeg');
+    if (res.ok) {
+      const blob = await res.blob();
+      const base64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(blob);
+      });
+      if (base64) {
+        cachedLogo2Base64 = base64;
+        return base64;
+      }
+    }
+  } catch (_) {}
+
+  return new Promise<string>((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || img.width;
+        canvas.height = img.naturalHeight || img.height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          cachedLogo2Base64 = canvas.toDataURL('image/jpeg');
+          resolve(cachedLogo2Base64);
+          return;
+        }
+      } catch (_) {}
+      resolve('');
+    };
+    img.onerror = () => resolve('');
+    img.src = '/logo2.jpeg';
+  });
+};
+
+export const generateAcknowledgementPDF = async (registration: FullSchoolRegistration): Promise<void> => {
   const { school, mentor, students } = registration;
   const doc = new jsPDF({
     orientation: 'portrait',
@@ -10,6 +54,9 @@ export const generateAcknowledgementPDF = (registration: FullSchoolRegistration)
   });
 
   const pageWidth = doc.internal.pageSize.getWidth();
+
+  // Load logo2 stamp
+  const logo2Stamp = await loadLogo2AsBase64();
 
   // Colors
   const navy = [15, 23, 42]; // #0F172A
@@ -188,8 +235,36 @@ export const generateAcknowledgementPDF = (registration: FullSchoolRegistration)
   doc.text('3. In accordance with UIDAI Privacy Guidelines, full Aadhaar copies are strictly prohibited and not retained.', 18, y + 19);
 
   // 7. Footer Stamp / Seal
-  y += 32;
+  y += 30;
+
+  // Render logo2 as authorized organizing committee stamp
+  const stampSize = 25; // 25mm x 25mm
+  const stampCenterX = (pageWidth - 70 + pageWidth - 14) / 2; // 168mm
+  const stampX = stampCenterX - stampSize / 2;
+  const stampY = y - stampSize - 2;
+
+  if (logo2Stamp && logo2Stamp.startsWith('data:image')) {
+    try {
+      // Subtle background and stamp border
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(stampX - 1.5, stampY - 1.5, stampSize + 3, stampSize + 3, 2, 2, 'FD');
+      doc.setDrawColor(37, 99, 235);
+      doc.setLineWidth(0.5);
+      doc.roundedRect(stampX - 1.5, stampY - 1.5, stampSize + 3, stampSize + 3, 2, 2, 'D');
+
+      doc.addImage(logo2Stamp, 'JPEG', stampX, stampY, stampSize, stampSize);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(6.5);
+      doc.setTextColor(37, 99, 235);
+      doc.text('OFFICIAL EVENT STAMP', stampCenterX, stampY - 2.5, { align: 'center' });
+    } catch (err) {
+      console.warn('Failed to render stamp on PDF', err);
+    }
+  }
+
   doc.setDrawColor(203, 213, 225);
+  doc.setLineWidth(0.2);
   doc.line(14, y, 70, y);
   doc.line(pageWidth - 70, y, pageWidth - 14, y);
 

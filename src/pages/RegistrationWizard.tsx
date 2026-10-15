@@ -534,8 +534,8 @@ export const RegistrationWizard: React.FC = () => {
               {/* Mentor Uploads */}
               <div className="p-4 bg-slate-50/70 rounded-xl border border-slate-200 sm:col-span-1">
                 <FileUploader
-                  label="Mentor Passport Photograph"
-                  helperText="Clear passport photograph (facing camera)"
+                  label="Mentor Photo"
+                  helperText="Clear photograph (facing camera)"
                   required
                   type="photos"
                   value={mentor.photo_path}
