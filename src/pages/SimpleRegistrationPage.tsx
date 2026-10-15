@@ -14,7 +14,8 @@ import {
   Phone,
   Mail,
   Download,
-  Printer
+  Printer,
+  ImageIcon
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { GoogleSignInButton } from '../components/GoogleSignInButton';
@@ -1009,30 +1010,38 @@ export const SimpleRegistrationPage: React.FC = () => {
             <Users className="w-8 h-8 text-purple-600/70" />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-7">
             {students.map((student, idx) => {
               return (
                 <div
                   key={idx}
-                  className="p-7 sm:p-8 rounded-3xl border-2 space-y-6 transition-all shadow-sm border-slate-200/90 bg-white hover:border-purple-300 hover:shadow-lg"
+                  className="bg-white rounded-3xl border-2 border-slate-200/90 hover:border-purple-300 p-6 sm:p-7 space-y-6 shadow-sm hover:shadow-xl transition-all duration-200 flex flex-col justify-between"
                 >
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                    <span className="text-base sm:text-lg font-black uppercase tracking-wider text-slate-900 flex items-center gap-2.5">
-                      <span className="w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black shadow-sm bg-purple-600 text-white">
+                  {/* Card Header */}
+                  <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-700 to-indigo-600 text-white font-black text-sm flex items-center justify-center shadow-md">
                         #{idx + 1}
-                      </span>
-                      <span>
-                        Student Delegate #{idx + 1}
-                      </span>
-                    </span>
-                    <span className="text-xs sm:text-sm font-extrabold px-3 py-1 rounded-lg bg-purple-100 text-purple-800 border border-purple-200">
-                      Mandatory
+                      </div>
+                      <div>
+                        <h4 className="text-base font-extrabold text-slate-900 leading-tight">
+                          Student #{idx + 1}
+                        </h4>
+                        <p className="text-[11px] font-bold text-purple-700 mt-0.5">
+                          Mandatory Delegate
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      Required
                     </span>
                   </div>
 
+                  {/* Form Inputs Container */}
                   <div className="space-y-4">
+                    {/* 1. Full Name */}
                     <div>
-                      <label className="block text-base font-bold text-slate-800 mb-2">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
                         Full Name <span className="text-rose-500">*</span>
                       </label>
                       <input
@@ -1041,85 +1050,139 @@ export const SimpleRegistrationPage: React.FC = () => {
                         onChange={(e) => updateStudent(idx, 'name', e.target.value)}
                         required
                         placeholder={`Full Name of Student ${idx + 1}`}
-                        className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-300 text-base font-semibold focus:outline-none focus:border-purple-600 focus:ring-4 focus:ring-purple-100 bg-white transition-all"
+                        className="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm font-semibold text-slate-900 focus:outline-none focus:border-purple-600 focus:ring-4 focus:ring-purple-100 bg-white transition-all placeholder:font-normal placeholder:text-slate-400"
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-base font-bold text-slate-800 mb-2 flex items-center justify-between">
-                          <span>
-                            Class / Standard <span className="text-rose-500">*</span>
-                          </span>
-                          <span className="text-[11px] font-extrabold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
-                            8th & 9th Only
-                          </span>
-                        </label>
-                        <select
-                          value={student.className}
-                          onChange={(e) => updateStudent(idx, 'className', e.target.value)}
-                          required
-                          className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-300 text-base font-bold text-slate-900 focus:outline-none focus:border-purple-600 focus:ring-4 focus:ring-purple-100 bg-white transition-all shadow-2xs"
+                    {/* 2. Class Selection: Segmented 2-Button Toggle */}
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 flex items-center justify-between">
+                        <span>
+                          Class / Standard <span className="text-rose-500">*</span>
+                        </span>
+                        <span className="text-[10px] font-black uppercase text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">
+                          8th or 9th Only
+                        </span>
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => updateStudent(idx, 'className', '8th')}
+                          className={`py-3 px-3 rounded-xl border-2 font-bold text-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                            student.className === '8th'
+                              ? 'bg-purple-600 text-white border-purple-600 shadow-md ring-2 ring-purple-200'
+                              : 'bg-slate-50 hover:bg-purple-50/60 text-slate-700 border-slate-200'
+                          }`}
                         >
-                          <option value="">-- Choose Class --</option>
-                          <option value="8th">8th Standard</option>
-                          <option value="9th">9th Standard</option>
-                        </select>
-                      </div>
+                          <span>8th Standard</span>
+                          {student.className === '8th' && <span className="text-xs">✓</span>}
+                        </button>
 
-                      <div>
-                        <label className="block text-base font-bold text-slate-800 mb-2">
-                          Student Reg No. <span className="text-slate-400 text-xs font-normal ml-1">(Roll No)</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={student.studentRegistrationNumber}
-                          onChange={(e) => updateStudent(idx, 'studentRegistrationNumber', e.target.value)}
-                          placeholder={`e.g. REG-0${idx + 1} / Roll No`}
-                          className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-300 text-base font-semibold focus:outline-none focus:border-purple-600 focus:ring-4 focus:ring-purple-100 bg-white transition-all"
-                        />
+                        <button
+                          type="button"
+                          onClick={() => updateStudent(idx, 'className', '9th')}
+                          className={`py-3 px-3 rounded-xl border-2 font-bold text-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                            student.className === '9th'
+                              ? 'bg-purple-600 text-white border-purple-600 shadow-md ring-2 ring-purple-200'
+                              : 'bg-slate-50 hover:bg-purple-50/60 text-slate-700 border-slate-200'
+                          }`}
+                        >
+                          <span>9th Standard</span>
+                          {student.className === '9th' && <span className="text-xs">✓</span>}
+                        </button>
                       </div>
+                    </div>
+
+                    {/* 3. Student Registration / Roll Number */}
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 flex items-center justify-between">
+                        <span>Student Reg / Roll No</span>
+                        <span className="text-[10px] text-slate-400 font-medium lowercase">(optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={student.studentRegistrationNumber}
+                        onChange={(e) => updateStudent(idx, 'studentRegistrationNumber', e.target.value)}
+                        placeholder={`e.g. REG-0${idx + 1} or Roll No`}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold text-slate-900 focus:outline-none focus:border-purple-600 focus:ring-4 focus:ring-purple-100 bg-white transition-all placeholder:font-normal placeholder:text-slate-400"
+                      />
                     </div>
                   </div>
 
-                  {/* Student Photo & ID Card file upload */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t-2 border-slate-100">
-                    <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-2">
-                      <label className="block text-sm font-bold text-slate-800">
-                        Student Photo
-                      </label>
+                  {/* 4. Student Photo & ID Proof Upload Tiles (Clean Stacked Layout) */}
+                  <div className="space-y-3 pt-4 border-t border-slate-100">
+                    {/* Student Photo */}
+                    <div className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-200/90 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                          <ImageIcon className="w-3.5 h-3.5 text-purple-600" />
+                          <span>Student Photo</span>
+                        </span>
+                        {student.photo ? (
+                          <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                            ✓ Attached
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-slate-400 font-medium">JPG / PNG</span>
+                        )}
+                      </div>
+
                       {student.photo ? (
-                        <div className="flex items-center gap-2.5 p-2 bg-slate-50 rounded-xl border border-slate-200 shadow-2xs">
-                          <img src={student.photo} alt={student.name || 'Student'} className="w-11 h-11 rounded-lg object-cover border" />
-                          <span className="text-xs font-extrabold text-emerald-600">✓ Attached</span>
-                          <button type="button" onClick={() => updateStudent(idx, 'photo', '')} className="text-xs text-rose-500 hover:underline ml-auto font-bold cursor-pointer">Clear</button>
+                        <div className="flex items-center gap-2.5 p-2 bg-white rounded-xl border border-slate-200 shadow-2xs">
+                          <img src={student.photo} alt={student.name || 'Student'} className="w-10 h-10 rounded-lg object-cover border border-slate-200" />
+                          <span className="text-xs font-bold text-slate-800 truncate">Photo attached</span>
+                          <button
+                            type="button"
+                            onClick={() => updateStudent(idx, 'photo', '')}
+                            className="text-xs text-rose-500 hover:text-rose-700 ml-auto font-bold cursor-pointer"
+                          >
+                            Remove
+                          </button>
                         </div>
                       ) : (
                         <input
                           type="file"
                           accept="image/*"
                           onChange={(e) => handleFileUpload(e, (url) => updateStudent(idx, 'photo', url))}
-                          className="block w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-extrabold file:bg-purple-100 file:text-purple-800 hover:file:bg-purple-200 cursor-pointer"
+                          className="block w-full text-xs text-slate-500 file:mr-2.5 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-purple-100 file:text-purple-800 hover:file:bg-purple-200 cursor-pointer"
                         />
                       )}
                     </div>
 
-                    <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-2">
-                      <label className="block text-sm font-bold text-slate-800">
-                        School ID / Proof
-                      </label>
+                    {/* School ID / Bona Fide Proof */}
+                    <div className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-200/90 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                          <FileText className="w-3.5 h-3.5 text-purple-600" />
+                          <span>School ID / Proof</span>
+                        </span>
+                        {student.idDoc ? (
+                          <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                            ✓ Attached
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-slate-400 font-medium">ID / PDF / Proof</span>
+                        )}
+                      </div>
+
                       {student.idDoc ? (
-                        <div className="flex items-center gap-2.5 p-2 bg-slate-50 rounded-xl border border-slate-200 shadow-2xs">
-                          <FileText className="w-8 h-8 text-purple-600" />
-                          <span className="text-xs font-extrabold text-emerald-600">✓ Attached</span>
-                          <button type="button" onClick={() => updateStudent(idx, 'idDoc', '')} className="text-xs text-rose-500 hover:underline ml-auto font-bold cursor-pointer">Clear</button>
+                        <div className="flex items-center gap-2.5 p-2 bg-white rounded-xl border border-slate-200 shadow-2xs">
+                          <FileText className="w-7 h-7 text-purple-600 shrink-0" />
+                          <span className="text-xs font-bold text-slate-800 truncate">ID document attached</span>
+                          <button
+                            type="button"
+                            onClick={() => updateStudent(idx, 'idDoc', '')}
+                            className="text-xs text-rose-500 hover:text-rose-700 ml-auto font-bold cursor-pointer"
+                          >
+                            Remove
+                          </button>
                         </div>
                       ) : (
                         <input
                           type="file"
                           accept="image/*,application/pdf"
                           onChange={(e) => handleFileUpload(e, (url) => updateStudent(idx, 'idDoc', url))}
-                          className="block w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-extrabold file:bg-purple-100 file:text-purple-800 hover:file:bg-purple-200 cursor-pointer"
+                          className="block w-full text-xs text-slate-500 file:mr-2.5 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-purple-100 file:text-purple-800 hover:file:bg-purple-200 cursor-pointer"
                         />
                       )}
                     </div>
