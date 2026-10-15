@@ -12,12 +12,15 @@ import {
   ArrowLeft,
   Lock,
   Phone,
-  Mail
+  Mail,
+  Download,
+  Printer
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { GoogleSignInButton } from '../components/GoogleSignInButton';
 import { api } from '../lib/api';
 import { District, ParticipatingSchool, Student, FullSchoolRegistration } from '../types';
+import { generateAcknowledgementPDF } from '../lib/pdfGenerator';
 
 export const SimpleRegistrationPage: React.FC = () => {
   const { user, logout, authError, clearAuthError, loginWithEmail } = useAuth();
@@ -57,6 +60,7 @@ export const SimpleRegistrationPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submittedRegId, setSubmittedRegId] = useState<string>('');
+  const [submittedRegistration, setSubmittedRegistration] = useState<FullSchoolRegistration | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Existing registered schools detector
@@ -211,9 +215,10 @@ export const SimpleRegistrationPage: React.FC = () => {
 
       // Save draft and submit
       const saved = await api.saveSchoolDraft(user?.id || `user-${Date.now()}`, schoolData, mentorData, studentsData);
-      await api.submitRegistration(saved.school.id, mentorEmail || user?.google_email || 'school@gkquiz2026.org');
+      const submitted = await api.submitRegistration(saved.school.id, mentorEmail || user?.google_email || 'school@gkquiz2026.org');
 
       setSubmittedRegId(regId);
+      setSubmittedRegistration(submitted);
       setIsSubmitted(true);
     } catch (err: any) {
       setErrorMessage(err.message || 'Failed to submit registration. Please try again.');
@@ -241,8 +246,66 @@ export const SimpleRegistrationPage: React.FC = () => {
     ]);
     setIsSubmitted(false);
     setSubmittedRegId('');
+    setSubmittedRegistration(null);
     setErrorMessage(null);
     setAlreadyRegisteredSchool(null);
+  };
+
+  const handleDownloadPDF = () => {
+    if (submittedRegistration) {
+      generateAcknowledgementPDF(submittedRegistration);
+      return;
+    }
+    const found = allRegisteredSchools.find(r => r.school.registration_id === submittedRegId);
+    if (found) {
+      generateAcknowledgementPDF(found);
+      return;
+    }
+    // Fallback constructed from current form data
+    const fallbackReg: FullSchoolRegistration = {
+      school: {
+        id: `school-${Date.now()}`,
+        registration_id: submittedRegId || 'EVT-2026-REG',
+        participating_school_id: selectedSchoolId,
+        school_name: schoolName,
+        district: (district as District) || 'Kolhapur',
+        school_code: schoolUdise,
+        address: `${district} District, Maharashtra`,
+        city: (district as District) || 'Kolhapur',
+        principal_name: 'Principal',
+        school_email: mentorEmail || 'school@gkquiz2026.org',
+        contact_number: mentorPhone || '9850461062',
+        status: 'submitted',
+        submitted_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      mentor: {
+        id: `mentor-${Date.now()}`,
+        school_id: `school-${Date.now()}`,
+        full_name: mentorName,
+        designation: mentorDesignation,
+        phone: mentorPhone,
+        email: mentorEmail,
+        photo_path: mentorPhoto,
+        id_document_path: mentorIdDoc,
+        created_at: new Date().toISOString(),
+      },
+      students: students.map((s, idx) => ({
+        id: `std-${idx + 1}`,
+        school_id: `school-${Date.now()}`,
+        student_number: idx + 1,
+        full_name: s.name,
+        class_name: s.className,
+        student_registration_number: s.studentRegistrationNumber,
+        photo_path: s.photo,
+        school_id_document_path: s.idDoc,
+        identity_document_type: 'school_id',
+        created_at: new Date().toISOString(),
+      })) as Student[],
+      reviews: []
+    };
+    generateAcknowledgementPDF(fallbackReg);
   };
 
   // 1. IF NOT LOGGED IN: SHOW GOOGLE SIGN-IN GATE
@@ -388,14 +451,16 @@ export const SimpleRegistrationPage: React.FC = () => {
   // 2. SUCCESS CARD
   if (isSubmitted) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-12 sm:py-16">
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-xl p-8 sm:p-14 text-center space-y-6">
+      <div className="max-w-4xl mx-auto px-4 py-10 sm:py-16">
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl p-6 sm:p-12 text-center space-y-8">
+          {/* Header Logos */}
           <div className="flex items-center justify-center gap-5 sm:gap-7">
             <div className="p-3 bg-white rounded-2xl border border-slate-200 shadow-sm">
-              <img src="/logo.png" alt="Team Tameer Logo" className="h-20 w-20 sm:h-24 sm:w-24 object-contain" />
+              <img src="/logo.png" alt="Team Tameer Logo" className="h-16 w-16 sm:h-20 sm:w-20 object-contain" />
             </div>
+            <div className="h-10 w-px bg-slate-200"></div>
             <div className="p-3 bg-white rounded-2xl border border-slate-200 shadow-sm">
-              <img src="/logo2.jpeg" alt="Event Partner Logo" className="h-20 w-20 sm:h-24 sm:w-24 object-contain rounded-xl" />
+              <img src="/logo2.jpeg" alt="Event Partner Logo" className="h-16 w-16 sm:h-20 sm:w-20 object-contain rounded-xl" />
             </div>
           </div>
 
@@ -404,23 +469,115 @@ export const SimpleRegistrationPage: React.FC = () => {
           </div>
 
           <div>
-            <span className="px-3.5 py-1 rounded-full text-xs sm:text-sm font-bold bg-emerald-100 text-emerald-800 uppercase tracking-wider">
-              Registration Confirmed
+            <span className="px-4 py-1.5 rounded-full text-xs sm:text-sm font-extrabold bg-emerald-100 text-emerald-800 uppercase tracking-wider inline-flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4 text-emerald-600" />
+              <span>Registration Confirmed</span>
             </span>
-            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 mt-3">
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 mt-4 tracking-tight">
               Registration Successfully Submitted!
             </h2>
-            <p className="text-base sm:text-lg text-slate-600 mt-2 max-w-lg mx-auto">
-              Your official delegation has been recorded. Thank you for registering <strong>{schoolName}</strong> for State-Level GK Quiz Contest 2026.
+            <p className="text-base sm:text-lg text-slate-600 mt-2 max-w-xl mx-auto">
+              Your official delegation has been registered for <strong>{schoolName}</strong> for the State-Level GK Quiz Contest 2026.
             </p>
           </div>
 
-          <div className="p-6 bg-gradient-to-br from-blue-50/80 to-indigo-50/50 border border-blue-200 rounded-2xl inline-block shadow-sm">
+          {/* Registration Number Badge */}
+          <div className="p-6 bg-gradient-to-br from-blue-50/90 to-indigo-50/70 border-2 border-blue-200 rounded-3xl inline-block shadow-sm">
             <p className="text-xs sm:text-sm font-bold text-blue-900 uppercase tracking-wider">Official Registration Number</p>
-            <p className="text-3xl sm:text-4xl font-mono font-black text-blue-700 mt-1">{submittedRegId}</p>
+            <p className="text-3xl sm:text-5xl font-mono font-black text-blue-700 mt-1.5 tracking-tight">{submittedRegId}</p>
           </div>
 
-          <div className="pt-3 flex flex-col sm:flex-row items-center justify-center gap-4">
+          {/* PROMINENT DOWNLOAD REGISTRATION FORM (PDF) CARD */}
+          <div className="bg-gradient-to-br from-emerald-50 via-teal-50/60 to-emerald-100/50 border-2 border-emerald-300 rounded-3xl p-6 sm:p-8 max-w-2xl mx-auto shadow-md space-y-4 text-center">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-200/80 text-emerald-900 text-xs font-black uppercase tracking-wider">
+              <FileText className="w-4 h-4 text-emerald-700" />
+              <span>Official Delegate Pass & Form</span>
+            </div>
+            
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900">
+              Download Registration Form (PDF)
+            </h3>
+            
+            <p className="text-xs sm:text-sm text-slate-700 max-w-lg mx-auto leading-relaxed">
+              Click below to download the official stamped registration acknowledgement and delegate pass. Contains full school details, mentor credentials, and 4 student delegates with registration numbers.
+            </p>
+
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={handleDownloadPDF}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white text-base sm:text-lg font-black shadow-lg hover:shadow-xl transition-all cursor-pointer ring-4 ring-emerald-300/40"
+              >
+                <Download className="w-6 h-6 animate-pulse" />
+                <span>Download Registration Form (PDF)</span>
+              </button>
+            </div>
+            <p className="text-[11px] text-emerald-800 font-medium">
+              A4 Print Ready • Includes Authorized Signatures & QR/Ref ID
+            </p>
+          </div>
+
+          {/* SUMMARY OF REGISTERED DELEGATION */}
+          <div className="border border-slate-200 bg-slate-50/60 rounded-3xl p-6 sm:p-7 text-left space-y-4 max-w-2xl mx-auto">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <span className="text-xs font-black uppercase tracking-wider text-slate-500">Registered Delegation Summary</span>
+              <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">4 Students + 1 Mentor</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+              <div className="p-3 bg-white rounded-xl border border-slate-200">
+                <p className="text-xs text-slate-400 font-bold uppercase">School & District</p>
+                <p className="font-bold text-slate-800">{schoolName}</p>
+                <p className="text-xs text-slate-500">{district} District {schoolUdise ? `• UDISE: ${schoolUdise}` : ''}</p>
+              </div>
+              <div className="p-3 bg-white rounded-xl border border-slate-200">
+                <p className="text-xs text-slate-400 font-bold uppercase">Faculty Mentor</p>
+                <p className="font-bold text-slate-800">{mentorName || 'Faculty In-Charge'}</p>
+                <p className="text-xs text-slate-500">{mentorDesignation} • {mentorPhone}</p>
+              </div>
+            </div>
+
+            <div className="space-y-2 pt-1">
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Student Delegates:</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                {students.map((st, i) => (
+                  <div key={i} className="p-2.5 bg-white rounded-lg border border-slate-200 flex items-center justify-between">
+                    <div>
+                      <span className="font-bold text-slate-800">{i + 1}. {st.name || `Student ${i + 1}`}</span>
+                      <span className="text-slate-500 ml-1.5 font-medium">({st.className || 'Class'})</span>
+                    </div>
+                    {st.studentRegistrationNumber && (
+                      <span className="font-mono text-[11px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
+                        {st.studentRegistrationNumber}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* CONTACT & QUERIES NOTICE */}
+          <div className="bg-amber-50/70 border border-amber-200 rounded-2xl p-4 sm:p-5 max-w-2xl mx-auto text-left text-xs sm:text-sm text-amber-900 space-y-2">
+            <div className="flex items-center gap-2 font-bold text-amber-950">
+              <Phone className="w-4 h-4 text-amber-600" />
+              <span>Questions or Corrections to Your Registration?</span>
+            </div>
+            <p className="text-xs text-amber-800 leading-relaxed">
+              If you need to update any student or mentor details, contact the organizing team or technical support:
+            </p>
+            <div className="flex flex-wrap gap-4 text-xs font-bold pt-1">
+              <a href="tel:+919850461062" className="text-blue-700 hover:underline">
+                📞 Ibrahim sir: +91 98504 61062
+              </a>
+              <a href="tel:7588171372" className="text-blue-700 hover:underline">
+                💻 Rehan Chougale: 7588171372 (Software Support)
+              </a>
+            </div>
+          </div>
+
+          {/* Navigation Action Buttons */}
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
               type="button"
               onClick={handleResetForm}
@@ -433,6 +590,12 @@ export const SimpleRegistrationPage: React.FC = () => {
               className="w-full sm:w-auto px-7 py-3.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-extrabold transition-all text-center"
             >
               View in Admin Panel
+            </Link>
+            <Link
+              to="/"
+              className="w-full sm:w-auto px-7 py-3.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-extrabold transition-all text-center"
+            >
+              Back to Home
             </Link>
           </div>
         </div>
