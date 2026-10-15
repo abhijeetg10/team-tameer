@@ -79,336 +79,373 @@ const safeAddImage = (
   }
 };
 
+/**
+ * Generate official registration PDF using the Team Tameer Registration Template format
+ */
 export const generateAcknowledgementPDF = async (registration: FullSchoolRegistration): Promise<void> => {
   const { school, mentor, students } = registration;
+
+  // A4 dimensions in PostScript Points: 595.28 pt x 841.89 pt
   const doc = new jsPDF({
     orientation: 'portrait',
-    unit: 'mm',
-    format: 'a4',
+    unit: 'pt',
+    format: [595.28, 841.89],
   });
 
-  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageWidth = 595.28;
 
-  // Load all images in parallel: logo, logo3, logo2 stamp, mentor photo, and 4 student photos
-  const [logoData, logo3Data, logo2Stamp, mentorPhotoData, ...studentsPhotosData] = await Promise.all([
+  // Load all images in parallel: Team Tameer logo, Conclave/Partner logo, RO Softwares logo, mentor photo, and student photos
+  const [logoData, partnerLogoData, roLogoData, mentorPhotoData, ...studentsPhotosData] = await Promise.all([
     ensureBase64Image('/logo.png'),
-    ensureBase64Image('/ROLogo.jpeg').then((res) => res || ensureBase64Image('/logo3.jpeg')),
-    ensureBase64Image('/logo2.jpeg'),
+    ensureBase64Image('/logo2.jpeg').then(res => res || ensureBase64Image('/ROLogo.jpeg')),
+    ensureBase64Image('/ROLogo.jpeg'),
     ensureBase64Image(mentor.photo_path),
     ...students.map((s) => ensureBase64Image(s.photo_path)),
   ]);
 
-  // Colors
-  const navy = [15, 23, 42]; // #0F172A
-  const blue = [37, 99, 235]; // #2563EB
-  const slate = [71, 85, 105]; // #475569
+  // Exact ReportLab Template Palette
+  const navy = [16, 43, 67];        // #102B43 (.062745 .168627 .262745)
+  const teal = [8, 120, 138];       // #08788A (.031373 .470588 .541176)
+  const slate = [97, 114, 132];     // #617284 (.380392 .447059 .517647)
+  const lineGray = [217, 226, 233];  // #D9E2E9 (.85098 .886275 .913725)
+  const bgTeal = [237, 244, 246];   // #EDF4F6 (.929412 .956863 .964706)
+  const bgCard = [242, 246, 248];   // #F2F6F8 (.94902 .964706 .972549)
+  const avatarBorder = [181, 197, 208]; // #B5C5D0 (.709804 .772549 .815686)
+  const badgeMuted = [185, 206, 220]; // #B9CEDC (.72549 .807843 .862745)
 
-  // 1. Header Banner (with logo.png on Left and logo3.jpeg on Right)
+  // 1. TOP NAVY ACCENT STRIP (y = 0 to 17pt)
   doc.setFillColor(navy[0], navy[1], navy[2]);
-  doc.rect(0, 0, pageWidth, 40, 'F');
+  doc.rect(0, 0, pageWidth, 17, 'F');
 
-  // Left Logo: Team Tameer (logo.png)
-  doc.setFillColor(255, 255, 255);
-  doc.roundedRect(12, 6, 28, 28, 3, 3, 'F');
-  safeAddImage(doc, logoData, 13, 7, 26, 26);
-
-  // Right Logo: Event Partner (logo3.jpeg)
-  doc.setFillColor(255, 255, 255);
-  doc.roundedRect(pageWidth - 40, 6, 28, 28, 3, 3, 'F');
-  safeAddImage(doc, logo3Data, pageWidth - 39, 7, 26, 26);
-
-  // Header Title & Conclave Subtitle
-  doc.setTextColor(255, 255, 255);
+  // Top School Info Bar (y ≈ 39pt)
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(14.5);
-  doc.text('STATE-LEVEL GK QUIZ CONTEST 2026', pageWidth / 2, 15, { align: 'center' });
+  doc.setFontSize(9);
+  doc.setTextColor(teal[0], teal[1], teal[2]);
+  doc.text('SCHOOL NO.', 30, 39);
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8.5);
-  doc.setTextColor(191, 219, 254);
-  doc.text('OFFICIAL REGISTRATION ACKNOWLEDGEMENT & DELEGATE PASS', pageWidth / 2, 22, { align: 'center' });
-
-  doc.setFontSize(7.5);
-  doc.setTextColor(148, 163, 184);
-  doc.text('Kolhapur • Sangli • Satara Interschool Conclave  |  Team Tameer', pageWidth / 2, 29, { align: 'center' });
-
-  doc.setFontSize(7);
-  doc.setTextColor(226, 232, 240);
-  doc.text('Authorized Final Delegation Record', pageWidth / 2, 35, { align: 'center' });
-
-  // 2. Registration ID Badge Box
-  doc.setFillColor(255, 255, 255);
-  doc.roundedRect(14, 45, pageWidth - 28, 19, 3, 3, 'FD');
-  doc.setDrawColor(203, 213, 225);
-  doc.setLineWidth(0.3);
-  doc.roundedRect(14, 45, pageWidth - 28, 19, 3, 3, 'D');
-
-  doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
-  doc.setTextColor(blue[0], blue[1], blue[2]);
-  doc.text(`REGISTRATION ID: ${school.registration_id}`, 20, 54);
+  doc.setTextColor(navy[0], navy[1], navy[2]);
+  const schoolNoDisplay = school.participating_school_id || school.school_code || '________________';
+  doc.text(schoolNoDisplay, 105, 39);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(slate[0], slate[1], slate[2]);
+  doc.text('EVENT DATE  28 NOV 2026', 420, 39);
+
+  // 2. HEADER: TEAM TAMEER LOGO + BRAND TITLES + PARTNER LOGO
+  // Left: Team Tameer Logo (x=30, y=50, w=78, h=77.5)
+  if (logoData) {
+    safeAddImage(doc, logoData, 30, 50, 78, 77.5);
+  }
+
+  // Right: Event Partner / Conclave Logo (x=445, y=56, w=120, h=54.5)
+  if (partnerLogoData) {
+    safeAddImage(doc, partnerLogoData, 445, 56, 120, 54.5);
+  }
+
+  // Center: Header Titles (x=124)
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(23);
+  doc.setTextColor(navy[0], navy[1], navy[2]);
+  doc.text('TEAM TAMEER', 124, 68);
+
+  doc.setFontSize(10);
+  doc.setTextColor(teal[0], teal[1], teal[2]);
+  doc.text('INTERSCHOOL CONCLAVE 2026', 124, 87);
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8.5);
+  doc.setFontSize(10);
   doc.setTextColor(slate[0], slate[1], slate[2]);
+  doc.text('Kolhapur  |  Sangli  |  Satara', 124, 104);
+
+  // Divider Line (y = 135)
+  doc.setDrawColor(lineGray[0], lineGray[1], lineGray[2]);
+  doc.setLineWidth(0.6);
+  doc.line(30, 135, 565, 135);
+
+  // 3. TITLE & PASS HEADING
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(navy[0], navy[1], navy[2]);
+  doc.text('OFFICIAL REGISTRATION ACKNOWLEDGEMENT', 30, 153);
+
+  doc.setFontSize(12);
+  doc.setTextColor(teal[0], teal[1], teal[2]);
+  doc.text('& DELEGATE PASS', 30, 169);
+
+  // 4. REGISTRATION ID & STATUS PILL BAR (y = 182, h = 34, w = 535)
+  doc.setFillColor(navy[0], navy[1], navy[2]);
+  doc.roundedRect(30, 182, 535, 34, 4, 4, 'F');
+
+  // Sub-badges inside navy bar
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(6.5);
+  doc.setTextColor(badgeMuted[0], badgeMuted[1], badgeMuted[2]);
+  doc.text('REGISTRATION ID', 41, 196);
+
+  doc.setFontSize(11);
+  doc.setTextColor(255, 255, 255);
+  doc.text(school.registration_id || 'REG-2026', 41, 209);
+
+  doc.setFontSize(6.5);
+  doc.setTextColor(badgeMuted[0], badgeMuted[1], badgeMuted[2]);
+  doc.text('STATUS', 235, 196);
+
+  doc.setFontSize(10);
+  doc.setTextColor(255, 255, 255);
+  doc.text(school.status.toUpperCase(), 235, 209);
+
+  doc.setFontSize(6.5);
+  doc.setTextColor(badgeMuted[0], badgeMuted[1], badgeMuted[2]);
+  doc.text('SUBMISSION DATE', 390, 196);
+
+  doc.setFontSize(10);
+  doc.setTextColor(255, 255, 255);
   const subDate = school.submitted_at
     ? new Date(school.submitted_at).toLocaleDateString('en-IN', {
         day: 'numeric',
         month: 'long',
         year: 'numeric',
       })
-    : new Date().toLocaleDateString();
-  doc.text(`Status: ${school.status.toUpperCase()}  |  Submission Date: ${subDate}`, 20, 60.5);
+    : new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+  doc.text(subDate, 390, 209);
 
-  // 3. Institution Details Box
-  let y = 71;
+  // 5. SECTION 01: INSTITUTION INFORMATION (y = 220, h = 23)
+  doc.setFillColor(bgTeal[0], bgTeal[1], bgTeal[2]);
+  doc.roundedRect(30, 220, 535, 23, 3, 3, 'F');
+
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9.5);
-  doc.setTextColor(navy[0], navy[1], navy[2]);
-  doc.text('1. INSTITUTION INFORMATION', 14, y);
-  y += 3.5;
+  doc.setFontSize(9);
+  doc.setTextColor(teal[0], teal[1], teal[2]);
+  doc.text('01  INSTITUTION INFORMATION', 40, 236);
 
-  doc.setDrawColor(226, 232, 240);
-  doc.line(14, y, pageWidth - 14, y);
-  y += 5.5;
+  // Fields
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(slate[0], slate[1], slate[2]);
+  doc.text('School name', 40, 262);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(navy[0], navy[1], navy[2]);
+  doc.text(school.school_name || 'N/A', 135, 262);
 
   doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(slate[0], slate[1], slate[2]);
+  doc.text('District / Address', 40, 280);
+
+  doc.setFontSize(9);
+  doc.setTextColor(navy[0], navy[1], navy[2]);
+  const districtAddress = `${school.district ? `${school.district} District / ` : ''}${school.city || ''} ${school.address || '______________________________'}`;
+  doc.text(districtAddress, 135, 280);
+
+  doc.setFontSize(7);
+  doc.setTextColor(slate[0], slate[1], slate[2]);
+  doc.text('Principal', 40, 298);
+
+  doc.setFontSize(9);
+  doc.setTextColor(navy[0], navy[1], navy[2]);
+  doc.text(school.principal_name || '________________________', 135, 298);
+
   doc.setFontSize(8);
+  doc.text(`School Code / UDISE: ${school.school_code || 'N/A'}`, 345, 298);
+
+  doc.setFontSize(7);
   doc.setTextColor(slate[0], slate[1], slate[2]);
+  doc.text('Email / Contact', 40, 316);
 
-  doc.text(`School Name:`, 14, y);
-  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
   doc.setTextColor(navy[0], navy[1], navy[2]);
-  doc.text(`${school.school_name}`, 44, y);
-  y += 4.5;
+  doc.text(`${school.school_email || 'N/A'}  |  ${school.contact_number || 'N/A'}`, 135, 316);
 
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(slate[0], slate[1], slate[2]);
-  doc.text(`District & Address:`, 14, y);
-  doc.text(`${school.district ? `${school.district} District - ` : ''}${school.city || ''} - ${school.address || ''}`, 44, y);
-  y += 4.5;
+  // 6. SECTION 02: DESIGNATED FACULTY MENTOR (y = 326, h = 23)
+  doc.setFillColor(bgTeal[0], bgTeal[1], bgTeal[2]);
+  doc.roundedRect(30, 326, 535, 23, 3, 3, 'F');
 
-  doc.text(`Principal / Head:`, 14, y);
-  doc.text(`${school.principal_name || 'Principal'}`, 44, y);
-  doc.text(`UDISE Code:`, 115, y);
-  doc.text(`${school.school_code || 'N/A'}`, 140, y);
-  y += 4.5;
-
-  doc.text(`Email & Contact:`, 14, y);
-  doc.text(`${school.school_email || 'N/A'}  |  ${school.contact_number || 'N/A'}`, 44, y);
-  y += 7.5;
-
-  // 4. Mentor Details + Mentor Photo
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9.5);
-  doc.setTextColor(navy[0], navy[1], navy[2]);
-  doc.text('2. DESIGNATED FACULTY MENTOR (1)', 14, y);
-  y += 3.5;
-  doc.line(14, y, pageWidth - 14, y);
-  y += 5.5;
+  doc.setFontSize(9);
+  doc.setTextColor(teal[0], teal[1], teal[2]);
+  doc.text('02  DESIGNATED FACULTY MENTOR', 40, 342);
 
-  // Mentor Photo Box on the Right side of the section
-  const mentorPhotoW = 18;
-  const mentorPhotoH = 22;
-  const mentorPhotoX = pageWidth - 14 - mentorPhotoW; // 178mm
-  const mentorPhotoY = y - 2;
+  // Mentor Photo Box (x=40, y=361, w=65, h=81)
+  doc.setFillColor(bgCard[0], bgCard[1], bgCard[2]);
+  doc.roundedRect(40, 361, 65, 81, 4, 4, 'FD');
+  doc.setDrawColor(lineGray[0], lineGray[1], lineGray[2]);
+  doc.roundedRect(40, 361, 65, 81, 4, 4, 'D');
 
-  doc.setFillColor(248, 250, 252);
-  doc.roundedRect(mentorPhotoX, mentorPhotoY, mentorPhotoW, mentorPhotoH, 1.5, 1.5, 'FD');
-  doc.setDrawColor(203, 213, 225);
-  doc.roundedRect(mentorPhotoX, mentorPhotoY, mentorPhotoW, mentorPhotoH, 1.5, 1.5, 'D');
-
-  const mentorHasPhoto = safeAddImage(doc, mentorPhotoData, mentorPhotoX + 0.6, mentorPhotoY + 0.6, mentorPhotoW - 1.2, mentorPhotoH - 1.2);
+  const mentorHasPhoto = safeAddImage(doc, mentorPhotoData, 41, 362, 63, 79);
   if (!mentorHasPhoto) {
+    // Draw placeholder avatar outline matching Template
+    doc.setDrawColor(avatarBorder[0], avatarBorder[1], avatarBorder[2]);
+    doc.circle(72.5, 389, 9, 'S');
+    doc.line(55.5, 409, 89.5, 409);
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(6.5);
-    doc.setTextColor(148, 163, 184);
-    doc.text('Mentor Photo', mentorPhotoX + mentorPhotoW / 2, mentorPhotoY + mentorPhotoH / 2 + 1, { align: 'center' });
+    doc.setFontSize(6.2);
+    doc.setTextColor(slate[0], slate[1], slate[2]);
+    doc.text('MENTOR PHOTO', 47, 432);
   }
 
-  // Mentor Text Info (Left side)
+  // Mentor Details (x=121)
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7);
+  doc.setTextColor(slate[0], slate[1], slate[2]);
+  doc.text('MENTOR FULL NAME', 121, 375);
+
+  doc.setFontSize(12);
+  doc.setTextColor(navy[0], navy[1], navy[2]);
+  doc.text(mentor.full_name || 'N/A', 121, 392);
+
   doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.text(`Designation: ${mentor.designation || 'In-Charge Faculty'}`, 121, 410);
+  doc.text(`Mobile: ${mentor.phone || 'N/A'}`, 121, 428);
+
+  doc.setFontSize(7);
+  doc.setTextColor(slate[0], slate[1], slate[2]);
+  doc.text('Official email', 310, 392);
+
   doc.setFontSize(8);
-  doc.setTextColor(slate[0], slate[1], slate[2]);
-  doc.text(`Mentor Full Name:`, 14, y);
-  doc.setFont('helvetica', 'bold');
   doc.setTextColor(navy[0], navy[1], navy[2]);
-  doc.text(`${mentor.full_name}`, 44, y);
-  y += 4.5;
+  doc.text(mentor.email || 'N/A', 310, 408);
+  doc.text('Mentor roll / staff ID: ______________', 310, 428);
 
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(slate[0], slate[1], slate[2]);
-  doc.text(`Designation:`, 14, y);
-  doc.text(`${mentor.designation || 'Faculty In-Charge'}`, 44, y);
-  y += 4.5;
+  // 7. SECTION 03: STUDENT DELEGATES (y = 448, h = 23)
+  doc.setFillColor(bgTeal[0], bgTeal[1], bgTeal[2]);
+  doc.roundedRect(30, 448, 535, 23, 3, 3, 'F');
 
-  doc.text(`Mobile Number:`, 14, y);
-  doc.text(`${mentor.phone}`, 44, y);
-  doc.text(`Official Email:`, 95, y);
-  doc.text(`${mentor.email || 'N/A'}`, 120, y);
-  y += 10;
-
-  // 5. Four Student Delegates with Photos (3 Mandatory + 1 Optional)
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9.5);
-  doc.setTextColor(navy[0], navy[1], navy[2]);
-  doc.text('3. REGISTERED STUDENT DELEGATES (3 MANDATORY + 1 OPTIONAL)', 14, y);
-  y += 3.5;
-  doc.line(14, y, pageWidth - 14, y);
-  y += 5.5;
+  doc.setFontSize(9);
+  doc.setTextColor(teal[0], teal[1], teal[2]);
+  doc.text('03  STUDENT DELEGATES  |  3 MANDATORY + 1 OPTIONAL', 40, 464);
 
-  // Table Header
-  doc.setFillColor(241, 245, 249);
-  doc.rect(14, y, pageWidth - 28, 7, 'F');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7.5);
-  doc.setTextColor(navy[0], navy[1], navy[2]);
-  doc.text('SL', 18, y + 4.5);
-  doc.text('PHOTO', 28, y + 4.5);
-  doc.text('DELEGATE FULL NAME & REG NO', 46, y + 4.5);
-  doc.text('CLASS / GRADE', 122, y + 4.5);
-  doc.text('DELEGATE STATUS', 156, y + 4.5);
-  y += 7.5;
+  // 4 Student Cards side by side
+  // Card 1: x=30 | Card 2: x=167 | Card 3: x=304 | Card 4: x=441 (Width = 124, Height = 164)
+  const cardXCoords = [30, 167, 304, 441];
+  const cardW = 124;
+  const cardH = 164;
+  const cardY = 486;
 
-  // Table Rows (Each with student photograph, full name, registration number, class, status)
   students.forEach((stu, index) => {
+    const cX = cardXCoords[index];
     const isOptional = index === 3;
     const hasName = Boolean(stu.full_name && stu.full_name.trim());
     const stuPhotoData = studentsPhotosData[index] || '';
 
-    const rowH = 15;
-    doc.setFillColor(index % 2 === 0 ? 255 : 249, index % 2 === 0 ? 255 : 250, index % 2 === 0 ? 255 : 252);
-    doc.rect(14, y, pageWidth - 28, rowH, 'F');
+    // Card Container
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(cX, cardY, cardW, cardH, 4, 4, 'FD');
+    doc.setDrawColor(lineGray[0], lineGray[1], lineGray[2]);
+    doc.roundedRect(cX, cardY, cardW, cardH, 4, 4, 'D');
 
-    // Serial
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(slate[0], slate[1], slate[2]);
-    doc.text(`${stu.student_number || index + 1}`, 18, y + 8.5);
+    // Inner Photo Box (x=cX+27, y=497, w=70, h=85)
+    const photoX = cX + 27;
+    const photoY = cardY + 11;
+    const photoW = 70;
+    const photoH = 85;
 
-    // Student Photo (11mm x 13mm)
-    const stuPhotoX = 26;
-    const stuPhotoY = y + 1;
-    const stuPhotoW = 11;
-    const stuPhotoH = 13;
+    doc.setFillColor(bgCard[0], bgCard[1], bgCard[2]);
+    doc.roundedRect(photoX, photoY, photoW, photoH, 4, 4, 'FD');
+    doc.setDrawColor(lineGray[0], lineGray[1], lineGray[2]);
+    doc.roundedRect(photoX, photoY, photoW, photoH, 4, 4, 'D');
 
-    doc.setFillColor(241, 245, 249);
-    doc.roundedRect(stuPhotoX, stuPhotoY, stuPhotoW, stuPhotoH, 1, 1, 'FD');
-    doc.setDrawColor(203, 213, 225);
-    doc.roundedRect(stuPhotoX, stuPhotoY, stuPhotoW, stuPhotoH, 1, 1, 'D');
-
-    const photoRendered = safeAddImage(doc, stuPhotoData, stuPhotoX + 0.4, stuPhotoY + 0.4, stuPhotoW - 0.8, stuPhotoH - 0.8);
-    if (!photoRendered) {
+    const photoDone = safeAddImage(doc, stuPhotoData, photoX + 1, photoY + 1, photoW - 2, photoH - 2);
+    if (!photoDone) {
+      // Draw Template Avatar placeholder
+      doc.setDrawColor(avatarBorder[0], avatarBorder[1], avatarBorder[2]);
+      doc.circle(photoX + 35, photoY + 28, 9, 'S');
+      doc.line(photoX + 18, photoY + 48, photoX + 52, photoY + 48);
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(5.5);
-      doc.setTextColor(148, 163, 184);
-      doc.text(hasName ? 'Photo' : '—', stuPhotoX + stuPhotoW / 2, stuPhotoY + stuPhotoH / 2 + 1, { align: 'center' });
-    }
-
-    // Name & Registration Number
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
-    doc.setTextColor(navy[0], navy[1], navy[2]);
-    const displayName = hasName
-      ? stu.full_name
-      : isOptional
-      ? 'Not Nominated (Optional Slot)'
-      : 'Pending Nomination';
-    doc.text(displayName, 44, y + 5.5);
-
-    // Student Registration Number
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    if (stu.student_registration_number) {
-      doc.setTextColor(blue[0], blue[1], blue[2]);
-      doc.text(`Reg No: ${stu.student_registration_number}`, 44, y + 10.5);
-    } else {
+      doc.setFontSize(6.2);
       doc.setTextColor(slate[0], slate[1], slate[2]);
-      doc.text(hasName ? 'Reg No: Not Assigned' : '—', 44, y + 10.5);
+      doc.text('STUDENT PHOTO', photoX + 7, photoY + 68);
     }
 
-    // Class / Grade
+    // Student Info Below Photo
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(navy[0], navy[1], navy[2]);
+    const numPrefix = `0${index + 1}  `;
+    const sName = hasName ? stu.full_name : isOptional ? 'Not Nominated' : 'Pending';
+    doc.text(`${numPrefix}${sName}`, cX + 10, cardY + 112);
+
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    doc.setTextColor(slate[0], slate[1], slate[2]);
-    doc.text(hasName ? stu.class_name || 'N/A' : isOptional ? '—' : 'N/A', 122, y + 8.5);
+    const regText = stu.student_registration_number ? `Roll no. ${stu.student_registration_number}` : 'Roll no. —';
+    const classText = stu.class_name ? `Class ${stu.class_name}` : 'Class —';
+    doc.text(`${regText}  |  ${classText}`, cX + 10, cardY + 129);
 
-    // Delegate Status
-    doc.text(
-      hasName
-        ? isOptional
-          ? 'Optional Delegate'
-          : 'Mandatory Delegate'
-        : isOptional
-        ? 'Optional Slot'
-        : 'Pending',
-      156,
-      y + 8.5
-    );
-
-    y += rowH;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(teal[0], teal[1], teal[2]);
+    doc.text(isOptional ? 'Optional delegate' : 'Mandatory delegate', cX + 10, cardY + 147);
   });
 
-  y += 5;
-
-  // 6. Security & Verification Notice
-  doc.setFillColor(239, 246, 255);
-  doc.roundedRect(14, y, pageWidth - 28, 18, 2, 2, 'F');
+  // 8. MANDATORY EVENT ACCREDITATION INSTRUCTIONS (y = 667)
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7.5);
-  doc.setTextColor(blue[0], blue[1], blue[2]);
-  doc.text('MANDATORY INSTRUCTIONS FOR EVENT ACCREDITATION:', 18, y + 5);
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7);
-  doc.setTextColor(slate[0], slate[1], slate[2]);
-  doc.text('1. The team must report at the reception counter on November 28, 2026 by 08:30 AM with this acknowledgement copy.', 18, y + 9.5);
-  doc.text('2. All registered students and mentor must carry physical original School ID cards for entry accreditation.', 18, y + 13);
-  doc.text('3. In accordance with UIDAI Privacy Guidelines, full Aadhaar copies are strictly prohibited and not retained.', 18, y + 16.5);
-
-  // 7. Footer Stamp / Seal (with logo2 as official stamp)
-  y += 28;
-
-  const stampSize = 24; // 24mm x 24mm
-  const stampCenterX = (pageWidth - 70 + pageWidth - 14) / 2; // 168mm
-  const stampX = stampCenterX - stampSize / 2;
-  const stampY = y - stampSize - 2;
-
-  if (logo2Stamp && logo2Stamp.startsWith('data:image')) {
-    try {
-      // Stamp container
-      doc.setFillColor(255, 255, 255);
-      doc.roundedRect(stampX - 1.5, stampY - 1.5, stampSize + 3, stampSize + 3, 2, 2, 'FD');
-      doc.setDrawColor(37, 99, 235);
-      doc.setLineWidth(0.5);
-      doc.roundedRect(stampX - 1.5, stampY - 1.5, stampSize + 3, stampSize + 3, 2, 2, 'D');
-
-      safeAddImage(doc, logo2Stamp, stampX, stampY, stampSize, stampSize);
-
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(6.5);
-      doc.setTextColor(37, 99, 235);
-      doc.text('OFFICIAL EVENT STAMP', stampCenterX, stampY - 2.5, { align: 'center' });
-    } catch (err) {
-      console.warn('Failed to render stamp on PDF', err);
-    }
-  }
-
-  doc.setDrawColor(203, 213, 225);
-  doc.setLineWidth(0.2);
-  doc.line(14, y, 70, y);
-  doc.line(pageWidth - 70, y, pageWidth - 14, y);
+  doc.setFontSize(8);
+  doc.setTextColor(teal[0], teal[1], teal[2]);
+  doc.text('MANDATORY EVENT ACCREDITATION INSTRUCTIONS', 30, 667);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
-  doc.setTextColor(slate[0], slate[1], slate[2]);
-  doc.text('Principal / Authorized Signature & Seal', 14, y + 5);
-  doc.text('Organizing Committee Registrar', pageWidth - 65, y + 5);
+  doc.setTextColor(navy[0], navy[1], navy[2]);
+  doc.text('1. Report at reception on 28 November 2026 by 08:30 AM with this acknowledgement.', 30, 682);
+  doc.text('2. All students and the mentor must carry their original physical School ID cards.', 30, 695);
+  doc.text('3. Do not submit full Aadhaar copies; the registration process does not retain them.', 30, 708);
 
+  // Divider Line before Signatures (y = 723)
+  doc.setDrawColor(lineGray[0], lineGray[1], lineGray[2]);
+  doc.setLineWidth(0.6);
+  doc.line(30, 723, 565, 723);
+
+  // 9. SIGNATURES & SOFTWARE PARTNER BLOCK
+  // Signature 1: Principal (x=36 to 205, y=778)
+  doc.line(36, 778, 205, 778);
+  doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
-  doc.setTextColor(148, 163, 184);
-  doc.text(`Generated digitally via State-Level GK Quiz Contest 2026 Portal on ${new Date().toISOString()} • Developer: RECPRO Rehan Chougule`, pageWidth / 2, 287, { align: 'center' });
+  doc.setTextColor(navy[0], navy[1], navy[2]);
+  doc.text('Principal / Authorized Signature & Seal', 37, 791);
 
-  // Save PDF
-  doc.save(`${school.registration_id}_Acknowledgement.pdf`);
+  // Signature 2: Organizing Committee Registrar (x=235 to 386, y=778)
+  doc.line(235, 778, 386, 778);
+  doc.text('Organizing Committee Registrar', 239, 791);
+
+  // Stamp: Event Partner / Conclave Seal right above Registrar line
+  if (partnerLogoData) {
+    safeAddImage(doc, partnerLogoData, 285, 740, 50, 35);
+  }
+
+  // Software Partner Card on Right (x=421 to 565, y=730, w=144, h=68)
+  doc.setFillColor(255, 255, 255);
+  doc.roundedRect(421, 730, 144, 68, 5, 5, 'FD');
+  doc.setDrawColor(lineGray[0], lineGray[1], lineGray[2]);
+  doc.roundedRect(421, 730, 144, 68, 5, 5, 'D');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7);
+  doc.setTextColor(teal[0], teal[1], teal[2]);
+  doc.text('SOFTWARE PARTNER', 449, 741);
+
+  // Software Partner Logo: ROLogo.jpeg (x=474, y=747, w=38, h=34)
+  if (roLogoData) {
+    safeAddImage(doc, roLogoData, 474, 747, 37.7, 34);
+  }
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(navy[0], navy[1], navy[2]);
+  doc.text('RO SOFTWARES', 444, 791);
+
+  // 10. VERY BOTTOM CREDITS (y = 816)
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(slate[0], slate[1], slate[2]);
+  doc.text('Developed by RECPRO Rehan Chougule', 30, 816);
+  doc.text('OFFICIAL REGISTRATION PASS  |  STATE-LEVEL GK QUIZ 2026', 342, 816);
+
+  // Trigger Save / Download
+  doc.save(`${school.registration_id || 'REG'}_Acknowledgement.pdf`);
 };
