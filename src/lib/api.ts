@@ -706,6 +706,8 @@ export const api = {
     // Also include any registrations that were submitted but didn't match a master school
     for (const reg of registrations) {
       if (!reg || !reg.school) continue;
+      // Filter out test/probe artifacts
+      if (reg.school.school_name?.toLowerCase().includes('probe')) continue;
       if (!matchedRegIds.has(reg.school.id) && (!reg.school.registration_id || !matchedRegIds.has(reg.school.registration_id))) {
         items.unshift({
           participatingSchool: {
@@ -1701,11 +1703,23 @@ export const api = {
     }
 
     try {
-      // Test insert probe to detect RLS permission block
-      const { error: insError } = await supabase.from('schools').insert({ school_name: '__probe__' }).select();
-      const isRls = insError?.code === '42501' || (insError?.message?.toLowerCase().includes('row-level security') ?? false);
+      const { data: schoolsData, error: fetchErr } = await supabase
+        .from('schools')
+        .select('id, school_name, status')
+        .neq('school_name', '__probe__');
+      
+      if (fetchErr) {
+        return {
+          isConfigured: true,
+          supabaseUrl: import.meta.env.VITE_SUPABASE_URL || 'https://dfmsrevoyldpwkhsypud.supabase.co',
+          dbReachable: false,
+          dbCount: 0,
+          localCount: localSubmittedCount,
+          rlsBlocked: fetchErr.code === '42501',
+          errorMessage: fetchErr.message
+        };
+      }
 
-      const { data: schoolsData } = await supabase.from('schools').select('id, school_name, status');
       const dbSubmittedCount = (schoolsData || []).filter((s: any) => s.status === 'submitted').length;
 
       return {
@@ -1714,8 +1728,7 @@ export const api = {
         dbReachable: true,
         dbCount: dbSubmittedCount,
         localCount: localSubmittedCount,
-        rlsBlocked: isRls,
-        errorMessage: insError ? insError.message : undefined
+        rlsBlocked: false
       };
     } catch (err: any) {
       return {
