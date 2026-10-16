@@ -159,7 +159,7 @@ export const SimpleRegistrationPage: React.FC = () => {
     }
     if (alreadyRegisteredSchool) {
       setErrorMessage(
-        `This school (${schoolName}) is already registered! If you have any queries or need assistance, please contact Ibrahim sir (+91 98504 61062) or Rehan Chougale (7588171372).`
+        `This school (${schoolName}) is already registered! If you have any queries or need assistance, please contact Ibrahim Faiz (+91 98504 61062), Dr. Rais Khan (+91 99234 79476), or Rehan Chougale (7588171372).`
       );
       return;
     }
@@ -582,7 +582,10 @@ export const SimpleRegistrationPage: React.FC = () => {
             </p>
             <div className="flex flex-wrap gap-4 text-xs font-bold pt-1">
               <a href="tel:+919850461062" className="text-blue-700 hover:underline">
-                📞 Ibrahim sir: +91 98504 61062
+                📞 Ibrahim Faiz: +91 98504 61062
+              </a>
+              <a href="tel:+919923479476" className="text-blue-700 hover:underline">
+                📞 Dr. Rais Khan: +91 99234 79476
               </a>
               <a href="tel:7588171372" className="text-blue-700 hover:underline">
                 💻 Rehan Chougale: 7588171372 (Software Support)
@@ -802,12 +805,12 @@ export const SimpleRegistrationPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-amber-200">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 border-t border-amber-200">
                   <div className="p-4 bg-white rounded-xl border border-amber-200 shadow-2xs space-y-1">
                     <p className="text-xs font-black uppercase tracking-wider text-slate-500">
-                      Event Administration & Queries
+                      Event Administration
                     </p>
-                    <p className="font-black text-slate-900 text-base">Ibrahim sir</p>
+                    <p className="font-black text-slate-900 text-base">Ibrahim Faiz</p>
                     <a
                       href="tel:+919850461062"
                       className="inline-flex items-center gap-2 text-blue-700 font-extrabold text-sm hover:underline pt-0.5"
@@ -819,7 +822,21 @@ export const SimpleRegistrationPage: React.FC = () => {
 
                   <div className="p-4 bg-white rounded-xl border border-amber-200 shadow-2xs space-y-1">
                     <p className="text-xs font-black uppercase tracking-wider text-slate-500">
-                      Software Development Side Issues
+                      Event Queries & Assistance
+                    </p>
+                    <p className="font-black text-slate-900 text-base">Dr. Rais Khan</p>
+                    <a
+                      href="tel:+919923479476"
+                      className="inline-flex items-center gap-2 text-blue-700 font-extrabold text-sm hover:underline pt-0.5"
+                    >
+                      <Phone className="w-4 h-4 text-emerald-600" />
+                      <span>+91 99234 79476</span>
+                    </a>
+                  </div>
+
+                  <div className="p-4 bg-white rounded-xl border border-amber-200 shadow-2xs space-y-1">
+                    <p className="text-xs font-black uppercase tracking-wider text-slate-500">
+                      Software Support
                     </p>
                     <p className="font-black text-slate-900 text-base">Rehan Chougale</p>
                     <a
@@ -1222,7 +1239,14 @@ export const SimpleRegistrationPage: React.FC = () => {
               className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-900 rounded-xl border border-blue-200 text-xs sm:text-sm font-extrabold transition-all"
             >
               <Phone className="w-4 h-4 text-emerald-600" />
-              <span>Ibrahim sir: +91 98504 61062</span>
+              <span>Ibrahim Faiz: +91 98504 61062</span>
+            </a>
+            <a
+              href="tel:+919923479476"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 rounded-xl border border-emerald-200 text-xs sm:text-sm font-extrabold transition-all"
+            >
+              <Phone className="w-4 h-4 text-emerald-600" />
+              <span>Dr. Rais Khan: +91 99234 79476</span>
             </a>
             <a
               href="tel:7588171372"

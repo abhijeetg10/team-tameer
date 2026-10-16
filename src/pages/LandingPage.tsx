@@ -415,15 +415,15 @@ export const LandingPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Contact 1: Ibrahim sir */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Contact 1: Ibrahim Faiz */}
             <div className="p-6 sm:p-8 rounded-2xl bg-gradient-to-br from-blue-50/70 to-white border-2 border-blue-200 flex flex-col justify-between space-y-4 hover:shadow-md transition-all">
               <div>
                 <span className="text-xs font-extrabold uppercase tracking-wider text-blue-700 bg-blue-100 px-3 py-1 rounded-lg">
-                  Event Administration & School Queries
+                  Event Administration
                 </span>
                 <h4 className="text-xl sm:text-2xl font-black text-slate-900 mt-3">
-                  Ibrahim sir
+                  Ibrahim Faiz
                 </h4>
                 <p className="text-sm text-slate-600 font-medium mt-1">
                   Contact for school accreditation, participation approvals, mentor queries, and event coordination.
@@ -432,7 +432,7 @@ export const LandingPage: React.FC = () => {
               <div className="pt-3 border-t border-blue-100">
                 <a
                   href="tel:+919850461062"
-                  className="inline-flex items-center gap-2.5 px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-base font-extrabold shadow-sm transition-all w-full sm:w-auto justify-center"
+                  className="inline-flex items-center gap-2.5 px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-base font-extrabold shadow-sm transition-all w-full justify-center"
                 >
                   <Phone className="w-5 h-5" />
                   <span>+91 98504 61062</span>
@@ -440,11 +440,35 @@ export const LandingPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Contact 2: Rehan Chougale */}
+            {/* Contact 2: Dr. Rais Khan */}
+            <div className="p-6 sm:p-8 rounded-2xl bg-gradient-to-br from-emerald-50/70 to-white border-2 border-emerald-200 flex flex-col justify-between space-y-4 hover:shadow-md transition-all">
+              <div>
+                <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-3 py-1 rounded-lg">
+                  Event Queries & Assistance
+                </span>
+                <h4 className="text-xl sm:text-2xl font-black text-slate-900 mt-3">
+                  Dr. Rais Khan
+                </h4>
+                <p className="text-sm text-slate-600 font-medium mt-1">
+                  Contact for event queries, general guidance, delegate support, and assistance with registrations.
+                </p>
+              </div>
+              <div className="pt-3 border-t border-emerald-100">
+                <a
+                  href="tel:+919923479476"
+                  className="inline-flex items-center gap-2.5 px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-base font-extrabold shadow-sm transition-all w-full justify-center"
+                >
+                  <Phone className="w-5 h-5" />
+                  <span>+91 99234 79476</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Contact 3: Rehan Chougale */}
             <div className="p-6 sm:p-8 rounded-2xl bg-gradient-to-br from-purple-50/70 to-white border-2 border-purple-200 flex flex-col justify-between space-y-4 hover:shadow-md transition-all">
               <div>
                 <span className="text-xs font-extrabold uppercase tracking-wider text-purple-700 bg-purple-100 px-3 py-1 rounded-lg">
-                  Software Development Side Issues
+                  Software Support
                 </span>
                 <h4 className="text-xl sm:text-2xl font-black text-slate-900 mt-3">
                   Rehan Chougale
@@ -456,7 +480,7 @@ export const LandingPage: React.FC = () => {
               <div className="pt-3 border-t border-purple-100">
                 <a
                   href="tel:7588171372"
-                  className="inline-flex items-center gap-2.5 px-5 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-base font-extrabold shadow-sm transition-all w-full sm:w-auto justify-center"
+                  className="inline-flex items-center gap-2.5 px-5 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-base font-extrabold shadow-sm transition-all w-full justify-center"
                 >
                   <Phone className="w-5 h-5" />
                   <span>7588171372</span>
