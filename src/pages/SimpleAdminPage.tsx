@@ -26,7 +26,11 @@ import {
   Edit3,
   PlusCircle,
   X,
-  Save
+  Save,
+  Database,
+  UploadCloud,
+  Copy,
+  ExternalLink
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { GoogleSignInButton } from '../components/GoogleSignInButton';
@@ -61,15 +65,51 @@ export const SimpleAdminPage: React.FC = () => {
   const [directEmailInput, setDirectEmailInput] = useState('');
   const [directAuthError, setDirectAuthError] = useState<string | null>(null);
 
+  // Database Diagnostic & Cloud Sync States
+  const [dbDiag, setDbDiag] = useState<{
+    isConfigured: boolean;
+    dbReachable: boolean;
+    dbCount: number;
+    localCount: number;
+    rlsBlocked: boolean;
+    errorMessage?: string;
+  } | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [showSqlGuide, setShowSqlGuide] = useState(false);
+  const [copiedSql, setCopiedSql] = useState(false);
+
   const loadSchools = async () => {
     setIsLoading(true);
     try {
       const data = await api.getAllParticipatingSchoolsWithStatus();
       setSchools(data);
+      api.getDatabaseDiagnostics().then(d => setDbDiag(d)).catch(() => {});
     } catch (err) {
       console.error(err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSyncToCloud = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await api.syncLocalRegistrationsToDatabase();
+      if (res.synced > 0) {
+        setActionMessage({ text: `Successfully synced ${res.synced} registration(s) to remote database!`, isError: false });
+        await loadSchools();
+      } else if (res.failed > 0) {
+        setActionMessage({ 
+          text: `Sync could not be saved to Supabase (${res.errors[0] || 'Check RLS policy in Supabase'}). Run the SQL script in Supabase SQL Editor.`, 
+          isError: true 
+        });
+      } else {
+        setActionMessage({ text: 'All submitted registrations are already synced with the cloud database.', isError: false });
+      }
+    } catch (err: any) {
+      setActionMessage({ text: 'Sync error: ' + err.message, isError: true });
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -337,6 +377,28 @@ export const SimpleAdminPage: React.FC = () => {
       setDirectAuthError(
         `Access Denied: "${clean}" is not an authorized administrator. Only designated Super Admins (${SUPER_ADMIN_EMAILS.join(', ')}) or emails added by a Super Admin have access.`
       );
+    }
+  };
+
+  const handlePurgeAllData = async () => {
+    if (!isSuper) {
+      alert('Access Restricted: Only Super Administrators can wipe database data.');
+      return;
+    }
+    const confirmed = window.confirm(
+      '⚠️ DANGER: Are you sure you want to completely clear each and everything from the database, storage, and local drafts?\n\nThis will remove all registrations, mentors, student records, and uploaded files across all institutions.'
+    );
+    if (!confirmed) return;
+
+    setIsLoading(true);
+    try {
+      await api.clearAllRegistrationsAndData();
+      await loadSchools();
+      setActionMessage({ text: 'All registrations, records, and files have been completely wiped from the database and storage!', isError: false });
+    } catch (err: any) {
+      alert('Failed to clear data: ' + err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -804,6 +866,175 @@ export const SimpleAdminPage: React.FC = () => {
               })}
             </div>
           </div>
+
+          {/* Danger Zone: Purge All Registrations & Storage */}
+          <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-black text-rose-300">Purge & Reset All Database & Storage Data</p>
+              <p className="text-xs text-slate-300">
+                Wipes each and every registration record, student delegates, mentor details, and uploaded files.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handlePurgeAllData}
+              className="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-sm cursor-pointer shrink-0 border border-rose-400"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>Clear Everything from Database</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Database Diagnostic & Cloud Sync Notice */}
+      {dbDiag && (dbDiag.rlsBlocked || (dbDiag.dbReachable && dbDiag.localCount > dbDiag.dbCount)) && (
+        <div className={`rounded-3xl border-2 p-6 sm:p-7 shadow-sm space-y-4 ${
+          dbDiag.rlsBlocked 
+            ? 'bg-amber-50/90 border-amber-300 text-amber-950' 
+            : 'bg-blue-50/90 border-blue-300 text-blue-950'
+        }`}>
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+            <div className="flex items-start gap-3.5">
+              <div className={`p-2.5 rounded-2xl shrink-0 ${
+                dbDiag.rlsBlocked ? 'bg-amber-200 text-amber-900' : 'bg-blue-200 text-blue-900'
+              }`}>
+                <Database className="w-6 h-6" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-base sm:text-lg font-black tracking-tight">
+                    {dbDiag.rlsBlocked 
+                      ? 'Database Persistence Notice: Supabase Row-Level Security (RLS) is Active' 
+                      : 'Pending Local Registrations: Cloud Database Sync Recommended'}
+                  </h3>
+                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider ${
+                    dbDiag.rlsBlocked 
+                      ? 'bg-amber-200 text-amber-900 border border-amber-300' 
+                      : 'bg-blue-200 text-blue-900 border border-blue-300'
+                  }`}>
+                    {dbDiag.rlsBlocked ? 'RLS Permission Block' : 'Sync Needed'}
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed max-w-3xl">
+                  {dbDiag.rlsBlocked ? (
+                    <>
+                      Supabase Row-Level Security is currently rejecting submissions on <code className="bg-amber-100 px-1 py-0.5 rounded font-mono font-bold">schools</code> and <code className="bg-amber-100 px-1 py-0.5 rounded font-mono font-bold">students</code> tables. 
+                      Registrations submitted by institutions are saved in local browser storage, but are <strong>not yet recorded in your central PostgreSQL database</strong>. 
+                      Run the 1-minute SQL script in your Supabase SQL Editor to allow all schools to persist permanently.
+                    </>
+                  ) : (
+                    <>
+                      There are {dbDiag.localCount} submitted registration(s) preserved in local cache, and {dbDiag.dbCount} in the remote database. Click the button below to sync all pending records into Supabase.
+                    </>
+                  )}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start sm:self-center">
+              {dbDiag.rlsBlocked && (
+                <>
+                  <a
+                    href="https://supabase.com/dashboard/project/dfmsrevoyldpwkhsypud/sql/new"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs sm:text-sm font-bold shadow-sm transition-all"
+                  >
+                    <span>Open Supabase SQL Editor</span>
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-300" />
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowSqlGuide(!showSqlGuide)}
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-amber-200 hover:bg-amber-300 text-amber-950 rounded-xl text-xs sm:text-sm font-bold border border-amber-400 transition-all cursor-pointer"
+                  >
+                    <span>{showSqlGuide ? 'Hide SQL Script' : 'View / Copy SQL Script'}</span>
+                  </button>
+                </>
+              )}
+
+              <button
+                type="button"
+                onClick={handleSyncToCloud}
+                disabled={isSyncing}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs sm:text-sm font-bold shadow-sm transition-all cursor-pointer disabled:opacity-50"
+              >
+                <UploadCloud className={`w-4 h-4 ${isSyncing ? 'animate-bounce' : ''}`} />
+                <span>{isSyncing ? 'Syncing...' : 'Sync Local Registrations to Database'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Expandable SQL Code Box */}
+          {showSqlGuide && (
+            <div className="mt-4 pt-4 border-t border-amber-200/80 space-y-3">
+              <div className="flex items-center justify-between text-xs font-bold text-amber-950">
+                <span>SQL Script to Run in Supabase SQL Editor:</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const sql = `-- Allow registration persistence
+ALTER TABLE public.schools DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.mentors DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.students DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.audit_logs DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.participating_schools DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.registration_reviews DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.event_settings DISABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anyone can view schools" ON public.schools;
+DROP POLICY IF EXISTS "Anyone can insert schools" ON public.schools;
+DROP POLICY IF EXISTS "Anyone can update schools" ON public.schools;
+DROP POLICY IF EXISTS "Anyone can delete schools" ON public.schools;
+CREATE POLICY "Anyone can view schools" ON public.schools FOR SELECT USING (true);
+CREATE POLICY "Anyone can insert schools" ON public.schools FOR INSERT WITH CHECK (true);
+CREATE POLICY "Anyone can update schools" ON public.schools FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "Anyone can delete schools" ON public.schools FOR DELETE USING (true);
+
+DROP TRIGGER IF EXISTS trg_validate_school_submission ON public.schools;
+DROP FUNCTION IF EXISTS public.check_registration_completeness_on_submit() CASCADE;
+
+ALTER TABLE public.schools DROP CONSTRAINT IF EXISTS schools_registered_by_user_id_fkey;
+ALTER TABLE public.schools ALTER COLUMN registered_by_user_id DROP NOT NULL;`;
+                    navigator.clipboard.writeText(sql);
+                    setCopiedSql(true);
+                    setTimeout(() => setCopiedSql(false), 3000);
+                  }}
+                  className="px-3 py-1.5 bg-amber-200 hover:bg-amber-300 text-amber-950 rounded-lg font-bold flex items-center gap-1.5 cursor-pointer text-xs"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>{copiedSql ? '✓ Copied to Clipboard!' : 'Copy SQL Script'}</span>
+                </button>
+              </div>
+              <pre className="p-3.5 rounded-xl bg-slate-900 text-emerald-400 font-mono text-xs overflow-x-auto leading-relaxed max-h-52 select-all">
+{`-- Allow registration persistence
+ALTER TABLE public.schools DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.mentors DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.students DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.audit_logs DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.participating_schools DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.registration_reviews DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.event_settings DISABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anyone can view schools" ON public.schools;
+DROP POLICY IF EXISTS "Anyone can insert schools" ON public.schools;
+DROP POLICY IF EXISTS "Anyone can update schools" ON public.schools;
+DROP POLICY IF EXISTS "Anyone can delete schools" ON public.schools;
+CREATE POLICY "Anyone can view schools" ON public.schools FOR SELECT USING (true);
+CREATE POLICY "Anyone can insert schools" ON public.schools FOR INSERT WITH CHECK (true);
+CREATE POLICY "Anyone can update schools" ON public.schools FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "Anyone can delete schools" ON public.schools FOR DELETE USING (true);
+
+DROP TRIGGER IF EXISTS trg_validate_school_submission ON public.schools;
+DROP FUNCTION IF EXISTS public.check_registration_completeness_on_submit() CASCADE;
+
+ALTER TABLE public.schools DROP CONSTRAINT IF EXISTS schools_registered_by_user_id_fkey;
+ALTER TABLE public.schools ALTER COLUMN registered_by_user_id DROP NOT NULL;`}
+              </pre>
+            </div>
+          )}
         </div>
       )}
 

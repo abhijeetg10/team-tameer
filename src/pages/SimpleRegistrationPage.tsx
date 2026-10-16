@@ -103,10 +103,11 @@ export const SimpleRegistrationPage: React.FC = () => {
     setAlreadyRegisteredSchool(match || null);
   };
 
-  // Convert uploaded file to base64 data URL
+  // Upload file directly to Supabase Storage (with fallback to local data URL if offline)
   const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    callback: (dataUrl: string) => void
+    callback: (url: string) => void,
+    preferredFolder?: 'photos' | 'documents'
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -116,13 +117,21 @@ export const SimpleRegistrationPage: React.FC = () => {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        callback(reader.result);
-      }
-    };
-    reader.readAsDataURL(file);
+    const folder: 'photos' | 'documents' = preferredFolder || (file.name.toLowerCase().endsWith('.pdf') ? 'documents' : 'photos');
+
+    try {
+      const res = await api.uploadFile(file, folder);
+      callback(res.path);
+    } catch (err: any) {
+      console.warn('Storage upload error, using local fallback:', err);
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          callback(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const updateStudent = (
@@ -969,7 +978,7 @@ export const SimpleRegistrationPage: React.FC = () => {
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => handleFileUpload(e, setMentorPhoto)}
+                  onChange={(e) => handleFileUpload(e, setMentorPhoto, 'photos')}
                   className="block w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-extrabold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200 cursor-pointer"
                 />
               )}
@@ -987,7 +996,7 @@ export const SimpleRegistrationPage: React.FC = () => {
                 <input
                   type="file"
                   accept="image/*,application/pdf"
-                  onChange={(e) => handleFileUpload(e, setMentorIdDoc)}
+                  onChange={(e) => handleFileUpload(e, setMentorIdDoc, 'documents')}
                   className="block w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-extrabold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200 cursor-pointer"
                 />
               )}
@@ -1147,7 +1156,7 @@ export const SimpleRegistrationPage: React.FC = () => {
                         <input
                           type="file"
                           accept="image/*"
-                          onChange={(e) => handleFileUpload(e, (url) => updateStudent(idx, 'photo', url))}
+                          onChange={(e) => handleFileUpload(e, (url) => updateStudent(idx, 'photo', url), 'photos')}
                           className="block w-full text-xs text-slate-500 file:mr-2.5 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-purple-100 file:text-purple-800 hover:file:bg-purple-200 cursor-pointer"
                         />
                       )}
@@ -1185,7 +1194,7 @@ export const SimpleRegistrationPage: React.FC = () => {
                         <input
                           type="file"
                           accept="image/*,application/pdf"
-                          onChange={(e) => handleFileUpload(e, (url) => updateStudent(idx, 'idDoc', url))}
+                          onChange={(e) => handleFileUpload(e, (url) => updateStudent(idx, 'idDoc', url), 'documents')}
                           className="block w-full text-xs text-slate-500 file:mr-2.5 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-purple-100 file:text-purple-800 hover:file:bg-purple-200 cursor-pointer"
                         />
                       )}
