@@ -167,15 +167,21 @@ export const SimpleRegistrationPage: React.FC = () => {
       setErrorMessage('Please enter your School UDISE Number.');
       return;
     }
-    if (!mentorName.trim() || !mentorPhone.trim()) {
-      setErrorMessage('Please enter Faculty Mentor name and contact phone number.');
+    if (!principalName.trim() || !principalPhone.trim()) {
+      setErrorMessage('Please enter Principal Full Name and Principal Mobile Number.');
+      return;
+    }
+    if (!mentorName.trim() || !mentorDesignation.trim() || !mentorPhone.trim() || !mentorEmail.trim()) {
+      setErrorMessage('Please enter all Faculty Mentor details (Full Name, Designation, Phone Number, and Official Email Address).');
       return;
     }
 
-    // Check all 3 mandatory students have full name and class
-    const missingMandatory = students.some(s => !s.name.trim() || !s.className.trim());
-    if (missingMandatory) {
-      setErrorMessage('Please provide full name and class for all 3 student delegates (Student #1, #2, and #3).');
+    // Check all 3 mandatory students have full name, class, and roll / registration number
+    const missingStudentFields = students.some(
+      s => !s.name.trim() || !s.className.trim() || !s.studentRegistrationNumber.trim()
+    );
+    if (missingStudentFields) {
+      setErrorMessage('Please provide Full Name, Class (8th or 9th), and Reg / Roll Number for all 3 student delegates.');
       return;
     }
 
@@ -877,12 +883,13 @@ export const SimpleRegistrationPage: React.FC = () => {
             {/* Principal Full Name & Principal Mobile Number */}
             <div>
               <label className="block text-sm sm:text-base font-extrabold text-slate-800 uppercase tracking-wider mb-2.5">
-                Principal Full Name
+                Principal Full Name <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
                 value={principalName}
                 onChange={(e) => setPrincipalName(e.target.value)}
+                required
                 placeholder="Dr. / Mr. / Mrs. Principal Name"
                 className="w-full px-5 py-4 rounded-2xl border-2 border-slate-300 text-base sm:text-lg font-bold text-slate-900 bg-white focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-100 shadow-sm transition-all placeholder:font-normal placeholder:text-slate-400"
               />
@@ -890,7 +897,9 @@ export const SimpleRegistrationPage: React.FC = () => {
 
             <div>
               <label className="block text-sm sm:text-base font-extrabold text-slate-800 uppercase tracking-wider mb-2.5 flex items-center justify-between">
-                <span>Principal Mobile Number</span>
+                <span>
+                  Principal Mobile Number <span className="text-rose-500">*</span>
+                </span>
                 <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 normal-case">
                   Official Contact
                 </span>
@@ -899,6 +908,7 @@ export const SimpleRegistrationPage: React.FC = () => {
                 type="tel"
                 value={principalPhone}
                 onChange={(e) => setPrincipalPhone(e.target.value)}
+                required
                 placeholder="e.g. +91 98220 12345 (10-digit Mobile)"
                 className="w-full px-5 py-4 rounded-2xl border-2 border-slate-300 text-base sm:text-lg font-bold text-slate-900 bg-white focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-100 shadow-sm transition-all placeholder:font-normal placeholder:text-slate-400"
               />
@@ -942,12 +952,13 @@ export const SimpleRegistrationPage: React.FC = () => {
 
             <div>
               <label className="block text-base font-bold text-slate-800 mb-2">
-                Designation / Role
+                Designation / Role <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
                 value={mentorDesignation}
                 onChange={(e) => setMentorDesignation(e.target.value)}
+                required
                 placeholder="Senior Science Teacher / Activity Head"
                 className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-300 text-base font-semibold focus:outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100 bg-white transition-all"
               />
@@ -969,12 +980,13 @@ export const SimpleRegistrationPage: React.FC = () => {
 
             <div>
               <label className="block text-base font-bold text-slate-800 mb-2">
-                Official Email Address
+                Official Email Address <span className="text-rose-500">*</span>
               </label>
               <input
                 type="email"
                 value={mentorEmail}
                 onChange={(e) => setMentorEmail(e.target.value)}
+                required
                 placeholder="mentor@school.edu.in"
                 className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-300 text-base font-semibold focus:outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100 bg-white transition-all"
               />
@@ -1126,13 +1138,18 @@ export const SimpleRegistrationPage: React.FC = () => {
                     {/* 3. Student Registration / Roll Number */}
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 flex items-center justify-between">
-                        <span>Student Reg / Roll No</span>
-                        <span className="text-[10px] text-slate-400 font-medium lowercase">(optional)</span>
+                        <span>
+                          Student Reg / Roll No <span className="text-rose-500">*</span>
+                        </span>
+                        <span className="text-[10px] text-purple-700 font-bold uppercase tracking-wide bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                          Required
+                        </span>
                       </label>
                       <input
                         type="text"
                         value={student.studentRegistrationNumber}
                         onChange={(e) => updateStudent(idx, 'studentRegistrationNumber', e.target.value)}
+                        required
                         placeholder={`e.g. REG-0${idx + 1} or Roll No`}
                         className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold text-slate-900 focus:outline-none focus:border-purple-600 focus:ring-4 focus:ring-purple-100 bg-white transition-all placeholder:font-normal placeholder:text-slate-400"
                       />
