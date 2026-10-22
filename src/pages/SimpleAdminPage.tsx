@@ -1311,6 +1311,14 @@ ALTER TABLE public.schools ALTER COLUMN registered_by_user_id DROP NOT NULL;`}
                           <span>{school.school_email}</span>
                         </a>
                       )}
+                      {(school as any).payment_transaction_id && (
+                        <div className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900 shadow-2xs font-bold text-xs">
+                          <span className="font-bold text-emerald-800">Fee: ₹1,000 Paid (Amin Karmalkar)</span>
+                          <span className="font-mono bg-white text-emerald-950 px-2 py-0.5 rounded border border-emerald-200 font-black">
+                            UTR: {(school as any).payment_transaction_id}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
 

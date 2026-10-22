@@ -15,7 +15,10 @@ import {
   Mail,
   Download,
   Printer,
-  ImageIcon
+  ImageIcon,
+  CreditCard,
+  Check,
+  Copy
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { GoogleSignInButton } from '../components/GoogleSignInButton';
@@ -59,6 +62,10 @@ export const SimpleRegistrationPage: React.FC = () => {
     { name: '', className: '', studentRegistrationNumber: '', photo: '', idDoc: '' },
     { name: '', className: '', studentRegistrationNumber: '', photo: '', idDoc: '' },
   ]);
+
+  // Payment Details (Registration Fee: Rs. 1000 via GPay / PhonePe to 8793224533 - Amin Karmalkar)
+  const [transactionId, setTransactionId] = useState('');
+  const [paymentCopied, setPaymentCopied] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -185,6 +192,12 @@ export const SimpleRegistrationPage: React.FC = () => {
       return;
     }
 
+    // Payment Transaction ID validation
+    if (!transactionId.trim()) {
+      setErrorMessage('Please enter the UPI Transaction ID / UTR Number for the Registration Fee of Rs. 1000 (paid to 8793224533 - Amin Karmalkar).');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       const regId = `GKQ-2026-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -203,6 +216,10 @@ export const SimpleRegistrationPage: React.FC = () => {
         status: 'submitted' as const,
         registration_id: regId,
         submitted_at: new Date().toISOString(),
+        payment_amount: 1000,
+        payment_transaction_id: transactionId.trim(),
+        payment_status: 'paid' as const,
+        payment_method: 'GPay / PhonePe (8793224533 - Amin Karmalkar)',
       };
 
       const mentorData = {
@@ -251,6 +268,7 @@ export const SimpleRegistrationPage: React.FC = () => {
     setMentorEmail('');
     setMentorPhoto('');
     setMentorIdDoc('');
+    setTransactionId('');
     setStudents([
       { name: '', className: '', studentRegistrationNumber: '', photo: '', idDoc: '' },
       { name: '', className: '', studentRegistrationNumber: '', photo: '', idDoc: '' },
@@ -555,6 +573,27 @@ export const SimpleRegistrationPage: React.FC = () => {
                 <p className="font-bold text-slate-800">{mentorName || 'Faculty In-Charge'}</p>
                 <p className="text-xs text-slate-500">{mentorDesignation} • {mentorPhone}</p>
               </div>
+            </div>
+
+            {/* Payment Details in Summary */}
+            <div className="p-3.5 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 uppercase tracking-wider">
+                  <CreditCard className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Registration Fee: ₹1,000 Paid (GPay / PhonePe)</span>
+                </div>
+                <p className="text-xs text-slate-600 mt-0.5 font-medium">
+                  Beneficiary: <strong>Amin Karmalkar</strong> (8793224533)
+                </p>
+              </div>
+              {submittedRegistration?.school.payment_transaction_id && (
+                <div className="text-left sm:text-right">
+                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Transaction ID / UTR</span>
+                  <span className="font-mono text-xs font-black text-emerald-900 bg-white px-2 py-0.5 rounded border border-emerald-300">
+                    {submittedRegistration.school.payment_transaction_id}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2 pt-1">
@@ -1237,6 +1276,140 @@ export const SimpleRegistrationPage: React.FC = () => {
                 </div>
               );
             })}
+          </div>
+        </div>
+
+        {/* SECTION 4: REGISTRATION FEES & PAYMENT DETAILS */}
+        <div className="bg-white rounded-3xl border-2 border-slate-200 p-8 sm:p-12 shadow-sm space-y-8">
+          <div className="flex items-center justify-between pb-6 border-b border-slate-100">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center border-2 border-emerald-100 font-black text-xl shadow-2xs">
+                04
+              </div>
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <h2 className="text-2xl sm:text-3xl font-black text-slate-900">
+                    Registration Fees & Payment
+                  </h2>
+                  <span className="px-3 py-1 bg-emerald-100 text-emerald-900 border border-emerald-200 rounded-full text-xs font-black uppercase tracking-wider">
+                    ₹1,000 / Delegation
+                  </span>
+                </div>
+                <p className="text-sm sm:text-base text-slate-500 mt-0.5">
+                  Complete the ₹1,000 registration fee payment via GPay or PhonePe and enter the transaction ID
+                </p>
+              </div>
+            </div>
+            <CreditCard className="w-8 h-8 text-emerald-600/70" />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+            {/* Payment Info & UPI Details Card */}
+            <div className="rounded-3xl bg-gradient-to-br from-emerald-50/90 via-teal-50/50 to-blue-50/40 border-2 border-emerald-200 p-6 sm:p-8 space-y-5 flex flex-col justify-between shadow-2xs">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-200">
+                    Official Payment Gateway
+                  </span>
+                  <span className="text-2xl sm:text-3xl font-black text-emerald-800">₹1,000</span>
+                </div>
+
+                <div>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Pay via GPay / PhonePe</p>
+                  <p className="text-lg font-black text-slate-900 mt-0.5">Amin Karmalkar</p>
+                </div>
+
+                <div className="p-4 bg-white rounded-2xl border-2 border-emerald-300 shadow-sm flex items-center justify-between gap-3">
+                  <div>
+                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">GPay / PhonePe Number</span>
+                    <span className="text-xl sm:text-2xl font-mono font-black text-emerald-700 tracking-wider">8793224533</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText('8793224533');
+                      setPaymentCopied(true);
+                      setTimeout(() => setPaymentCopied(false), 2500);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs sm:text-sm font-extrabold shadow-sm transition-all cursor-pointer"
+                  >
+                    {paymentCopied ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        <span>Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4" />
+                        <span>Copy Number</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div className="text-xs text-slate-600 space-y-1.5 leading-relaxed bg-white/70 p-3.5 rounded-xl border border-slate-200">
+                  <p className="font-bold text-slate-800 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>How to pay:</span>
+                  </p>
+                  <ol className="list-decimal pl-5 space-y-1 text-slate-600 font-medium">
+                    <li>Open <strong>Google Pay (GPay)</strong> or <strong>PhonePe</strong> on your smartphone.</li>
+                    <li>Pay <strong className="text-slate-900 font-black">₹1,000</strong> to mobile number <strong className="text-slate-900 font-black font-mono">8793224533</strong> (Amin Karmalkar).</li>
+                    <li>Copy or note down the <strong>UPI Transaction ID / UTR Number</strong> from the payment receipt.</li>
+                    <li>Enter the Transaction ID in the box on the right before submitting the form.</li>
+                  </ol>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-emerald-200/80 flex items-center gap-2 text-xs text-emerald-900 font-semibold">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Includes participation pass for 3 student delegates + 1 faculty mentor</span>
+              </div>
+            </div>
+
+            {/* Transaction ID Input Card */}
+            <div className="rounded-3xl border-2 border-slate-200 p-6 sm:p-8 flex flex-col justify-between space-y-6 bg-slate-50/40">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-black">
+                    <FileText className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black text-slate-900">Enter Payment Transaction ID</h3>
+                    <p className="text-xs text-slate-500 font-medium">Mandatory for verification & receipt</p>
+                  </div>
+                </div>
+
+                <div className="space-y-2 pt-2">
+                  <label htmlFor="transactionIdInput" className="block text-sm font-extrabold text-slate-800 uppercase tracking-wider">
+                    UPI Transaction ID / UTR Number <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    id="transactionIdInput"
+                    type="text"
+                    required
+                    value={transactionId}
+                    onChange={(e) => setTransactionId(e.target.value)}
+                    placeholder="e.g. 4289XXXXXXXX or UPI Ref No."
+                    className="w-full px-5 py-4 rounded-2xl border-2 border-slate-300 font-mono text-base sm:text-lg font-bold text-slate-900 bg-white focus:outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100 shadow-sm transition-all placeholder:font-sans placeholder:text-slate-400 placeholder:text-sm"
+                  />
+                  <p className="text-[11px] text-slate-500 font-medium">
+                    Please ensure the transaction ID is entered accurately. It will be printed on your official registration acknowledgement PDF.
+                  </p>
+                </div>
+
+                {transactionId.trim() && (
+                  <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 flex items-center gap-2.5 text-xs text-emerald-900 font-bold">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>Transaction ID recorded: <strong className="font-mono text-emerald-950 font-black">{transactionId.trim()}</strong></span>
+                  </div>
+                )}
+              </div>
+
+              <div className="p-4 bg-amber-50/80 rounded-2xl border border-amber-200 text-xs text-amber-900 leading-relaxed font-medium">
+                <span className="font-bold text-amber-950">Payment Verification Support:</span> If your payment is deducted but you face any issues getting the transaction ID, contact Amin Karmalkar at <strong>8793224533</strong>.
+              </div>
+            </div>
           </div>
         </div>
 

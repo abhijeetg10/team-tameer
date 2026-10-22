@@ -367,7 +367,11 @@ function mapDbSchoolToFullRegistration(s: any): FullSchoolRegistration {
       correction_remarks: s.correction_remarks,
       submitted_at: s.submitted_at,
       created_at: s.created_at,
-      updated_at: s.updated_at
+      updated_at: s.updated_at,
+      payment_amount: s.payment_amount,
+      payment_transaction_id: s.payment_transaction_id,
+      payment_status: s.payment_status,
+      payment_method: s.payment_method
     },
     mentor: mentorRecord,
     students: studentsList,
@@ -424,6 +428,18 @@ async function persistSchoolToDatabase(
     }
     if (isUuid(school.registered_by_user_id)) {
       schoolPayload.registered_by_user_id = school.registered_by_user_id;
+    }
+    if (school.payment_amount !== undefined) {
+      schoolPayload.payment_amount = school.payment_amount;
+    }
+    if (school.payment_transaction_id) {
+      schoolPayload.payment_transaction_id = school.payment_transaction_id;
+    }
+    if (school.payment_status) {
+      schoolPayload.payment_status = school.payment_status;
+    }
+    if (school.payment_method) {
+      schoolPayload.payment_method = school.payment_method;
     }
 
     let savedSchoolId = existingDbSchool?.id;
@@ -942,6 +958,10 @@ export const api = {
         status: schoolData.status || 'draft',
         registered_by_user_id: userId,
         is_representative_verified: false,
+        payment_amount: schoolData.payment_amount ?? 1000,
+        payment_transaction_id: schoolData.payment_transaction_id || '',
+        payment_status: schoolData.payment_status || 'paid',
+        payment_method: schoolData.payment_method || 'UPI (GPay / PhonePe)',
         created_at: now,
         updated_at: now
       };

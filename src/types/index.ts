@@ -50,6 +50,10 @@ export interface School {
   created_at: string;
   updated_at: string;
   correction_remarks?: string;
+  payment_amount?: number;
+  payment_transaction_id?: string;
+  payment_status?: 'paid' | 'pending' | 'exempt';
+  payment_method?: string;
 }
 
 export interface SchoolMember {
