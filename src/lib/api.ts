@@ -1569,34 +1569,99 @@ export const api = {
     adminEmail: string = 'admin@eventportal.org'
   ): Promise<boolean> {
     const schools = await this.getAllSchools();
+    const cleanTarget = (schoolIdOrParticipatingId || '').trim().toLowerCase();
     const index = schools.findIndex(
       s => s.school.id === schoolIdOrParticipatingId || 
            s.school.participating_school_id === schoolIdOrParticipatingId ||
-           (s.school.school_name && schoolIdOrParticipatingId && 
-            s.school.school_name.trim().toLowerCase() === schoolIdOrParticipatingId.trim().toLowerCase())
+           (s.school.school_name && s.school.school_name.trim().toLowerCase() === cleanTarget) ||
+           (s.school.registration_id && s.school.registration_id.trim().toLowerCase() === cleanTarget)
     );
 
     if (index === -1) {
+      // Even if not found in cache, attempt direct DB delete if ID is provided
+      if (isSupabaseConfigured && supabase) {
+        try {
+          const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(schoolIdOrParticipatingId);
+          if (isUuid) {
+            await supabase.from('schools').delete().or(`id.eq.${schoolIdOrParticipatingId},participating_school_id.eq.${schoolIdOrParticipatingId}`);
+          }
+        } catch (_) {}
+      }
       return false;
     }
 
     const removed = schools[index];
-    schools.splice(index, 1);
-    safeSetCache(STORAGE_KEYS.SCHOOLS, schools.map(sanitizeForCache));
+    const removedSchoolId = removed.school.id;
+    const removedPartSchoolId = removed.school.participating_school_id;
+    const removedSchoolName = removed.school.school_name;
 
-    // Clear user mapping if present
-    if (removed.school.registered_by_user_id) {
-      localStorage.removeItem(`user_school_${removed.school.registered_by_user_id}`);
+    // Filter out all possible references from in-memory and local cache
+    const filteredSchools = schools.filter(s => {
+      if (s.school.id === removedSchoolId) return false;
+      if (removedPartSchoolId && s.school.participating_school_id === removedPartSchoolId) return false;
+      if (removedSchoolName && s.school.school_name && s.school.school_name.trim().toLowerCase() === removedSchoolName.trim().toLowerCase()) return false;
+      return true;
+    });
+
+    safeSetCache(STORAGE_KEYS.SCHOOLS, filteredSchools.map(sanitizeForCache));
+
+    // Clear any user-to-school mapping keys in localStorage
+    if (typeof window !== 'undefined' && window.localStorage) {
+      if (removed.school.registered_by_user_id) {
+        localStorage.removeItem(`user_school_${removed.school.registered_by_user_id}`);
+      }
+      // Scan for any user_school_ keys pointing to this school
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('user_school_')) {
+          const val = localStorage.getItem(k);
+          if (val === removedSchoolId || val === removedPartSchoolId) {
+            localStorage.removeItem(k);
+          }
+        }
+      }
     }
 
-    // Supabase cascade delete if live
+    // Supabase cascade delete: delete children then school record across all identifiers
     if (isSupabaseConfigured && supabase) {
       try {
-        await supabase.from('schools').delete().eq('id', removed.school.id);
+        const isUuid = (val?: string) => val && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+        
+        // Find DB record IDs first to cleanly delete related children
+        let dbSchoolIds: string[] = [];
+        if (isUuid(removedSchoolId)) dbSchoolIds.push(removedSchoolId);
+        if (isUuid(removedPartSchoolId)) {
+          const { data: dbMatches } = await supabase.from('schools').select('id').eq('participating_school_id', removedPartSchoolId);
+          if (dbMatches) {
+            dbMatches.forEach(m => { if (!dbSchoolIds.includes(m.id)) dbSchoolIds.push(m.id); });
+          }
+        }
+        if (removedSchoolName) {
+          const { data: nameMatches } = await supabase.from('schools').select('id').ilike('school_name', removedSchoolName);
+          if (nameMatches) {
+            nameMatches.forEach(m => { if (!dbSchoolIds.includes(m.id)) dbSchoolIds.push(m.id); });
+          }
+        }
+
+        for (const sid of dbSchoolIds) {
+          await supabase.from('students').delete().eq('school_id', sid);
+          await supabase.from('mentors').delete().eq('school_id', sid);
+          await supabase.from('registration_reviews').delete().eq('school_id', sid);
+          await supabase.from('schools').delete().eq('id', sid);
+        }
+
+        if (isUuid(removedPartSchoolId)) {
+          await supabase.from('schools').delete().eq('participating_school_id', removedPartSchoolId);
+        }
       } catch (err) {
         console.warn('Supabase delete error:', err);
       }
     }
+
+    // Trigger storage event so other open tabs/windows update immediately
+    try {
+      window.dispatchEvent(new Event('storage'));
+    } catch (_) {}
 
     await this.logAudit({
       actor_id: 'admin',

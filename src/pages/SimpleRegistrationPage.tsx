@@ -77,11 +77,22 @@ export const SimpleRegistrationPage: React.FC = () => {
   const [allRegisteredSchools, setAllRegisteredSchools] = useState<FullSchoolRegistration[]>([]);
   const [alreadyRegisteredSchool, setAlreadyRegisteredSchool] = useState<FullSchoolRegistration | null>(null);
 
-  // Load existing registrations
-  useEffect(() => {
+  // Refresh registrations helper
+  const refreshRegisteredSchools = () => {
     api.getAllSchools().then((regs) => {
       setAllRegisteredSchools(regs);
     });
+  };
+
+  // Load existing registrations and listen for deletion / updates across tabs
+  useEffect(() => {
+    refreshRegisteredSchools();
+
+    const handleStorageChange = (e?: StorageEvent | Event) => {
+      refreshRegisteredSchools();
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   // Update schools dropdown when district changes
@@ -90,14 +101,28 @@ export const SimpleRegistrationPage: React.FC = () => {
       api.getParticipatingSchools(district).then((list) => {
         setSchoolsList(list);
       });
-      api.getAllSchools().then((regs) => {
-        setAllRegisteredSchools(regs);
-      });
+      refreshRegisteredSchools();
     } else {
       setSchoolsList([]);
       setAlreadyRegisteredSchool(null);
     }
   }, [district]);
+
+  // Keep alreadyRegisteredSchool in sync with selectedSchoolId and allRegisteredSchools
+  useEffect(() => {
+    if (!selectedSchoolId) {
+      setAlreadyRegisteredSchool(null);
+      return;
+    }
+    const found = schoolsList.find(s => s.id === selectedSchoolId);
+    const sName = found?.school_name?.trim().toLowerCase() || schoolName.trim().toLowerCase();
+    const match = allRegisteredSchools.find(r => 
+      r.school.participating_school_id === selectedSchoolId ||
+      r.school.id === selectedSchoolId ||
+      (sName && r.school.school_name && r.school.school_name.trim().toLowerCase() === sName)
+    );
+    setAlreadyRegisteredSchool(match || null);
+  }, [selectedSchoolId, allRegisteredSchools, schoolsList, schoolName]);
 
   // When a school is picked from the dropdown
   const handleSchoolSelect = (psId: string) => {
@@ -106,7 +131,12 @@ export const SimpleRegistrationPage: React.FC = () => {
     if (found) {
       setSchoolName(found.school_name);
     }
-    const match = allRegisteredSchools.find(r => r.school.participating_school_id === psId);
+    const sName = found?.school_name?.trim().toLowerCase() || '';
+    const match = allRegisteredSchools.find(r => 
+      r.school.participating_school_id === psId ||
+      r.school.id === psId ||
+      (sName && r.school.school_name && r.school.school_name.trim().toLowerCase() === sName)
+    );
     setAlreadyRegisteredSchool(match || null);
   };
 
