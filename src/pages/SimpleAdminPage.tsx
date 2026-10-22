@@ -992,7 +992,7 @@ export const SimpleAdminPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    const sql = `-- Allow registration persistence
+                    const sql = `-- Allow registration persistence & payment fields
 ALTER TABLE public.schools DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mentors DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.students DISABLE ROW LEVEL SECURITY;
@@ -1000,6 +1000,13 @@ ALTER TABLE public.audit_logs DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.participating_schools DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.registration_reviews DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.event_settings DISABLE ROW LEVEL SECURITY;
+
+-- Payment Columns
+ALTER TABLE public.schools ADD COLUMN IF NOT EXISTS payment_amount NUMERIC DEFAULT 1000;
+ALTER TABLE public.schools ADD COLUMN IF NOT EXISTS payment_transaction_id TEXT;
+ALTER TABLE public.schools ADD COLUMN IF NOT EXISTS payment_screenshot_path TEXT;
+ALTER TABLE public.schools ADD COLUMN IF NOT EXISTS payment_status TEXT DEFAULT 'paid';
+ALTER TABLE public.schools ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'GPay / PhonePe (8793224533 - Amin Karmalkar)';
 
 DROP POLICY IF EXISTS "Anyone can view schools" ON public.schools;
 DROP POLICY IF EXISTS "Anyone can insert schools" ON public.schools;
@@ -1014,7 +1021,11 @@ DROP TRIGGER IF EXISTS trg_validate_school_submission ON public.schools;
 DROP FUNCTION IF EXISTS public.check_registration_completeness_on_submit() CASCADE;
 
 ALTER TABLE public.schools DROP CONSTRAINT IF EXISTS schools_registered_by_user_id_fkey;
-ALTER TABLE public.schools ALTER COLUMN registered_by_user_id DROP NOT NULL;`;
+ALTER TABLE public.schools ALTER COLUMN registered_by_user_id DROP NOT NULL;
+
+-- Storage buckets for receipts & documents
+INSERT INTO storage.buckets (id, name, public) VALUES ('school-documents', 'school-documents', true) ON CONFLICT (id) DO UPDATE SET public = true;
+INSERT INTO storage.buckets (id, name, public) VALUES ('school-photos', 'school-photos', true) ON CONFLICT (id) DO UPDATE SET public = true;`;
                     navigator.clipboard.writeText(sql);
                     setCopiedSql(true);
                     setTimeout(() => setCopiedSql(false), 3000);
@@ -1026,7 +1037,7 @@ ALTER TABLE public.schools ALTER COLUMN registered_by_user_id DROP NOT NULL;`;
                 </button>
               </div>
               <pre className="p-3.5 rounded-xl bg-slate-900 text-emerald-400 font-mono text-xs overflow-x-auto leading-relaxed max-h-52 select-all">
-{`-- Allow registration persistence
+{`-- Allow registration persistence & payment fields
 ALTER TABLE public.schools DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mentors DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.students DISABLE ROW LEVEL SECURITY;
@@ -1034,6 +1045,13 @@ ALTER TABLE public.audit_logs DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.participating_schools DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.registration_reviews DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.event_settings DISABLE ROW LEVEL SECURITY;
+
+-- Payment Columns
+ALTER TABLE public.schools ADD COLUMN IF NOT EXISTS payment_amount NUMERIC DEFAULT 1000;
+ALTER TABLE public.schools ADD COLUMN IF NOT EXISTS payment_transaction_id TEXT;
+ALTER TABLE public.schools ADD COLUMN IF NOT EXISTS payment_screenshot_path TEXT;
+ALTER TABLE public.schools ADD COLUMN IF NOT EXISTS payment_status TEXT DEFAULT 'paid';
+ALTER TABLE public.schools ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'GPay / PhonePe (8793224533 - Amin Karmalkar)';
 
 DROP POLICY IF EXISTS "Anyone can view schools" ON public.schools;
 DROP POLICY IF EXISTS "Anyone can insert schools" ON public.schools;
@@ -1048,7 +1066,11 @@ DROP TRIGGER IF EXISTS trg_validate_school_submission ON public.schools;
 DROP FUNCTION IF EXISTS public.check_registration_completeness_on_submit() CASCADE;
 
 ALTER TABLE public.schools DROP CONSTRAINT IF EXISTS schools_registered_by_user_id_fkey;
-ALTER TABLE public.schools ALTER COLUMN registered_by_user_id DROP NOT NULL;`}
+ALTER TABLE public.schools ALTER COLUMN registered_by_user_id DROP NOT NULL;
+
+-- Storage buckets for receipts & documents
+INSERT INTO storage.buckets (id, name, public) VALUES ('school-documents', 'school-documents', true) ON CONFLICT (id) DO UPDATE SET public = true;
+INSERT INTO storage.buckets (id, name, public) VALUES ('school-photos', 'school-photos', true) ON CONFLICT (id) DO UPDATE SET public = true;`}
               </pre>
             </div>
           )}
