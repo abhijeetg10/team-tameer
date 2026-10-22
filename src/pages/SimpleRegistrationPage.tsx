@@ -18,7 +18,9 @@ import {
   ImageIcon,
   CreditCard,
   Check,
-  Copy
+  Copy,
+  UploadCloud,
+  ExternalLink
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { GoogleSignInButton } from '../components/GoogleSignInButton';
@@ -65,6 +67,8 @@ export const SimpleRegistrationPage: React.FC = () => {
 
   // Payment Details (Registration Fee: Rs. 1000 via GPay / PhonePe to 8793224533 - Amin Karmalkar)
   const [transactionId, setTransactionId] = useState('');
+  const [paymentScreenshot, setPaymentScreenshot] = useState('');
+  const [isUploadingPaymentScreenshot, setIsUploadingPaymentScreenshot] = useState(false);
   const [paymentCopied, setPaymentCopied] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -222,9 +226,9 @@ export const SimpleRegistrationPage: React.FC = () => {
       return;
     }
 
-    // Payment Transaction ID validation
-    if (!transactionId.trim()) {
-      setErrorMessage('Please enter the UPI Transaction ID / UTR Number for the Registration Fee of Rs. 1000 (paid to 8793224533 - Amin Karmalkar).');
+    // Payment Verification: Screenshot or Transaction ID validation
+    if (!paymentScreenshot.trim() && !transactionId.trim()) {
+      setErrorMessage('Please upload the Payment Screenshot or enter the UPI Transaction ID / UTR Number for the Registration Fee of Rs. 1000 (paid to 8793224533 - Amin Karmalkar).');
       return;
     }
 
@@ -247,7 +251,8 @@ export const SimpleRegistrationPage: React.FC = () => {
         registration_id: regId,
         submitted_at: new Date().toISOString(),
         payment_amount: 1000,
-        payment_transaction_id: transactionId.trim(),
+        payment_transaction_id: transactionId.trim() || 'RECEIPT_UPLOADED',
+        payment_screenshot_path: paymentScreenshot.trim(),
         payment_status: 'paid' as const,
         payment_method: 'GPay / PhonePe (8793224533 - Amin Karmalkar)',
       };
@@ -299,6 +304,7 @@ export const SimpleRegistrationPage: React.FC = () => {
     setMentorPhoto('');
     setMentorIdDoc('');
     setTransactionId('');
+    setPaymentScreenshot('');
     setStudents([
       { name: '', className: '', studentRegistrationNumber: '', photo: '', idDoc: '' },
       { name: '', className: '', studentRegistrationNumber: '', photo: '', idDoc: '' },
@@ -606,7 +612,7 @@ export const SimpleRegistrationPage: React.FC = () => {
             </div>
 
             {/* Payment Details in Summary */}
-            <div className="p-3.5 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 uppercase tracking-wider">
                   <CreditCard className="w-3.5 h-3.5 text-emerald-600" />
@@ -615,13 +621,23 @@ export const SimpleRegistrationPage: React.FC = () => {
                 <p className="text-xs text-slate-600 mt-0.5 font-medium">
                   Beneficiary: <strong>Amin Karmalkar</strong> (8793224533)
                 </p>
+                {submittedRegistration?.school.payment_transaction_id && submittedRegistration.school.payment_transaction_id !== 'RECEIPT_UPLOADED' && (
+                  <p className="text-xs font-mono text-emerald-950 font-bold mt-1">
+                    Transaction ID / UTR: <span className="bg-white px-2 py-0.5 rounded border border-emerald-300">{submittedRegistration.school.payment_transaction_id}</span>
+                  </p>
+                )}
               </div>
-              {submittedRegistration?.school.payment_transaction_id && (
-                <div className="text-left sm:text-right">
-                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Transaction ID / UTR</span>
-                  <span className="font-mono text-xs font-black text-emerald-900 bg-white px-2 py-0.5 rounded border border-emerald-300">
-                    {submittedRegistration.school.payment_transaction_id}
-                  </span>
+              {(submittedRegistration?.school.payment_screenshot_path || paymentScreenshot) && (
+                <div className="flex items-center gap-2">
+                  <a
+                    href={submittedRegistration?.school.payment_screenshot_path || paymentScreenshot}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-lg text-xs font-bold transition-all shadow-2xs"
+                  >
+                    <ImageIcon className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>View Payment Screenshot</span>
+                  </a>
                 </div>
               )}
             </div>
@@ -1400,47 +1416,119 @@ export const SimpleRegistrationPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Transaction ID Input Card */}
+            {/* Payment Verification Card: Screenshot Upload & Transaction ID */}
             <div className="rounded-3xl border-2 border-slate-200 p-6 sm:p-8 flex flex-col justify-between space-y-6 bg-slate-50/40">
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-black">
-                    <FileText className="w-5 h-5" />
+                  <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-black">
+                    <UploadCloud className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-black text-slate-900">Enter Payment Transaction ID</h3>
-                    <p className="text-xs text-slate-500 font-medium">Mandatory for verification & receipt</p>
+                    <h3 className="text-lg font-black text-slate-900">Upload Payment Screenshot</h3>
+                    <p className="text-xs text-slate-500 font-medium">Upload GPay / PhonePe receipt screenshot for instant verification</p>
                   </div>
                 </div>
 
-                <div className="space-y-2 pt-2">
-                  <label htmlFor="transactionIdInput" className="block text-sm font-extrabold text-slate-800 uppercase tracking-wider">
-                    UPI Transaction ID / UTR Number <span className="text-rose-500">*</span>
+                {/* Screenshot Upload Dropzone / Button */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-extrabold text-slate-800 uppercase tracking-wider">
+                    Payment Screenshot <span className="text-rose-500">*</span>
+                  </label>
+
+                  {paymentScreenshot ? (
+                    <div className="p-4 bg-emerald-50 rounded-2xl border-2 border-emerald-300 flex items-center justify-between gap-3 shadow-xs">
+                      <div className="flex items-center gap-3 min-w-0">
+                        {paymentScreenshot.startsWith('data:image') || paymentScreenshot.match(/\.(jpg|jpeg|png|webp)/i) ? (
+                          <img
+                            src={paymentScreenshot}
+                            alt="Payment Receipt"
+                            className="w-14 h-14 object-cover rounded-xl border border-emerald-200 shrink-0"
+                          />
+                        ) : (
+                          <div className="w-14 h-14 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-700 shrink-0">
+                            <FileText className="w-7 h-7" />
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <p className="text-sm font-black text-emerald-950 flex items-center gap-1.5 truncate">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                            <span>Payment Screenshot Attached</span>
+                          </p>
+                          <a
+                            href={paymentScreenshot}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-emerald-700 hover:text-emerald-900 font-bold underline inline-flex items-center gap-1 mt-0.5"
+                          >
+                            <span>Preview Screenshot</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setPaymentScreenshot('')}
+                        className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0"
+                      >
+                        Remove / Replace
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="relative border-2 border-dashed border-emerald-300 hover:border-emerald-500 bg-white hover:bg-emerald-50/30 rounded-2xl p-6 text-center transition-all cursor-pointer group">
+                      <input
+                        type="file"
+                        accept="image/*,application/pdf"
+                        disabled={isUploadingPaymentScreenshot}
+                        onChange={async (e) => {
+                          setIsUploadingPaymentScreenshot(true);
+                          await handleFileUpload(e, (url) => {
+                            setPaymentScreenshot(url);
+                          }, 'documents');
+                          setIsUploadingPaymentScreenshot(false);
+                        }}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                      />
+                      <div className="flex flex-col items-center justify-center space-y-2 pointer-events-none">
+                        <div className="w-12 h-12 rounded-2xl bg-emerald-50 group-hover:bg-emerald-100 text-emerald-600 flex items-center justify-center transition-all">
+                          <UploadCloud className={`w-6 h-6 ${isUploadingPaymentScreenshot ? 'animate-bounce' : ''}`} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-black text-slate-800">
+                            {isUploadingPaymentScreenshot ? 'Uploading Screenshot...' : 'Click or Drag to Upload Payment Screenshot'}
+                          </p>
+                          <p className="text-xs text-slate-400 font-medium mt-0.5">
+                            Supports PNG, JPG, JPEG or PDF (Max 8MB)
+                          </p>
+                        </div>
+                        <span className="inline-block px-3 py-1 bg-emerald-100 text-emerald-800 rounded-lg text-[11px] font-extrabold uppercase tracking-wide">
+                          Upload GPay / PhonePe Receipt
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Optional UPI Transaction ID / UTR Number */}
+                <div className="space-y-1.5 pt-1">
+                  <label htmlFor="transactionIdInput" className="block text-xs font-extrabold text-slate-700 uppercase tracking-wider">
+                    UPI Transaction ID / UTR Number <span className="text-slate-400 font-semibold normal-case">(Optional if screenshot attached)</span>
                   </label>
                   <input
                     id="transactionIdInput"
                     type="text"
-                    required
                     value={transactionId}
                     onChange={(e) => setTransactionId(e.target.value)}
                     placeholder="e.g. 4289XXXXXXXX or UPI Ref No."
-                    className="w-full px-5 py-4 rounded-2xl border-2 border-slate-300 font-mono text-base sm:text-lg font-bold text-slate-900 bg-white focus:outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100 shadow-sm transition-all placeholder:font-sans placeholder:text-slate-400 placeholder:text-sm"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 font-mono text-sm sm:text-base font-bold text-slate-900 bg-white focus:outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100 shadow-sm transition-all placeholder:font-sans placeholder:text-slate-400 placeholder:text-xs"
                   />
                   <p className="text-[11px] text-slate-500 font-medium">
-                    Please ensure the transaction ID is entered accurately. It will be printed on your official registration acknowledgement PDF.
+                    You can either upload the payment screenshot above or provide the Transaction ID.
                   </p>
                 </div>
-
-                {transactionId.trim() && (
-                  <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 flex items-center gap-2.5 text-xs text-emerald-900 font-bold">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>Transaction ID recorded: <strong className="font-mono text-emerald-950 font-black">{transactionId.trim()}</strong></span>
-                  </div>
-                )}
               </div>
 
               <div className="p-4 bg-amber-50/80 rounded-2xl border border-amber-200 text-xs text-amber-900 leading-relaxed font-medium">
-                <span className="font-bold text-amber-950">Payment Verification Support:</span> If your payment is deducted but you face any issues getting the transaction ID, contact Amin Karmalkar at <strong>8793224533</strong>.
+                <span className="font-bold text-amber-950">Payment Verification Support:</span> If your payment is deducted but you face any issues uploading screenshot, contact Amin Karmalkar at <strong>8793224533</strong>.
               </div>
             </div>
           </div>

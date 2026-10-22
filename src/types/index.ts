@@ -52,6 +52,7 @@ export interface School {
   correction_remarks?: string;
   payment_amount?: number;
   payment_transaction_id?: string;
+  payment_screenshot_path?: string;
   payment_status?: 'paid' | 'pending' | 'exempt';
   payment_method?: string;
 }

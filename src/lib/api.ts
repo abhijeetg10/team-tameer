@@ -213,6 +213,15 @@ export async function preserveLegacyDraftAttachments(
     );
   }
 
+  // Payment screenshot
+  if (updatedReg.school?.payment_screenshot_path?.startsWith('data:')) {
+    updatedReg.school.payment_screenshot_path = await uploadDataUrlToStorage(
+      updatedReg.school.payment_screenshot_path,
+      'documents',
+      'payment_receipt'
+    );
+  }
+
   // Mentor photo
   if (updatedReg.mentor?.photo_path?.startsWith('data:')) {
     updatedReg.mentor.photo_path = await uploadDataUrlToStorage(
@@ -370,6 +379,7 @@ function mapDbSchoolToFullRegistration(s: any): FullSchoolRegistration {
       updated_at: s.updated_at,
       payment_amount: s.payment_amount,
       payment_transaction_id: s.payment_transaction_id,
+      payment_screenshot_path: s.payment_screenshot_path,
       payment_status: s.payment_status,
       payment_method: s.payment_method
     },
@@ -434,6 +444,9 @@ async function persistSchoolToDatabase(
     }
     if (school.payment_transaction_id) {
       schoolPayload.payment_transaction_id = school.payment_transaction_id;
+    }
+    if (school.payment_screenshot_path && !school.payment_screenshot_path.startsWith('data:')) {
+      schoolPayload.payment_screenshot_path = school.payment_screenshot_path;
     }
     if (school.payment_status) {
       schoolPayload.payment_status = school.payment_status;
@@ -960,6 +973,7 @@ export const api = {
         is_representative_verified: false,
         payment_amount: schoolData.payment_amount ?? 1000,
         payment_transaction_id: schoolData.payment_transaction_id || '',
+        payment_screenshot_path: schoolData.payment_screenshot_path || '',
         payment_status: schoolData.payment_status || 'paid',
         payment_method: schoolData.payment_method || 'UPI (GPay / PhonePe)',
         created_at: now,

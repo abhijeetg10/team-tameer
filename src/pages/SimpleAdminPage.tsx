@@ -168,6 +168,10 @@ export const SimpleAdminPage: React.FC = () => {
     }
   };
 
+  // Preview Modal State for Payment Screenshots / Documents
+  const [previewModalUrl, setPreviewModalUrl] = useState<string | null>(null);
+  const [previewModalTitle, setPreviewModalTitle] = useState<string>('');
+
   // Edit & Delete Admin Controls State
   const [editingItem, setEditingItem] = useState<MasterSchoolListItem | null>(null);
   const [editUdise, setEditUdise] = useState('');
@@ -176,6 +180,8 @@ export const SimpleAdminPage: React.FC = () => {
   const [editPrincipalPhone, setEditPrincipalPhone] = useState('');
   const [editContact, setEditContact] = useState('');
   const [editEmail, setEditEmail] = useState('');
+  const [editPaymentTxnId, setEditPaymentTxnId] = useState('');
+  const [editPaymentScreenshot, setEditPaymentScreenshot] = useState('');
   const [editMentorName, setEditMentorName] = useState('');
   const [editMentorPhone, setEditMentorPhone] = useState('');
   const [editMentorEmail, setEditMentorEmail] = useState('');
@@ -205,6 +211,8 @@ export const SimpleAdminPage: React.FC = () => {
     setEditPrincipalPhone((reg?.school as any)?.principal_phone || reg?.school.contact_number || '');
     setEditContact(reg?.school.contact_number || reg?.mentor.phone || '');
     setEditEmail(reg?.school.school_email || reg?.mentor.email || '');
+    setEditPaymentTxnId((reg?.school as any)?.payment_transaction_id || '');
+    setEditPaymentScreenshot((reg?.school as any)?.payment_screenshot_path || '');
     setEditMentorName(reg?.mentor.full_name || '');
     setEditMentorPhone(reg?.mentor.phone || '');
     setEditMentorEmail(reg?.mentor.email || '');
@@ -258,6 +266,10 @@ export const SimpleAdminPage: React.FC = () => {
               principal_phone: editPrincipalPhone.trim(),
               contact_number: editPrincipalPhone.trim() || editContact.trim() || editMentorPhone.trim(),
               school_email: editEmail.trim(),
+              payment_amount: 1000,
+              payment_transaction_id: editPaymentTxnId.trim() || (editingItem.registration.school as any).payment_transaction_id || 'RECEIPT_UPLOADED',
+              payment_screenshot_path: editPaymentScreenshot.trim() || (editingItem.registration.school as any).payment_screenshot_path,
+              payment_status: 'paid',
             },
             status: editStatus,
             mentor: {
@@ -292,6 +304,11 @@ export const SimpleAdminPage: React.FC = () => {
           status: editStatus,
           registration_id: regId,
           submitted_at: new Date().toISOString(),
+          payment_amount: 1000,
+          payment_transaction_id: editPaymentTxnId.trim() || 'RECEIPT_UPLOADED',
+          payment_screenshot_path: editPaymentScreenshot.trim(),
+          payment_status: 'paid' as const,
+          payment_method: 'GPay / PhonePe (8793224533 - Amin Karmalkar)',
         };
 
         const mentorData = {
@@ -1311,12 +1328,37 @@ ALTER TABLE public.schools ALTER COLUMN registered_by_user_id DROP NOT NULL;`}
                           <span>{school.school_email}</span>
                         </a>
                       )}
-                      {(school as any).payment_transaction_id && (
-                        <div className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900 shadow-2xs font-bold text-xs">
+                      {Boolean((school as any).payment_transaction_id || (school as any).payment_screenshot_path) && (
+                        <div className="inline-flex flex-wrap items-center gap-2 p-1.5 sm:px-3 sm:py-2 rounded-xl bg-emerald-50 border-2 border-emerald-300 text-emerald-900 shadow-2xs font-bold text-xs">
                           <span className="font-bold text-emerald-800">Fee: ₹1,000 Paid (Amin Karmalkar)</span>
-                          <span className="font-mono bg-white text-emerald-950 px-2 py-0.5 rounded border border-emerald-200 font-black">
-                            UTR: {(school as any).payment_transaction_id}
-                          </span>
+                          {(school as any).payment_transaction_id && (school as any).payment_transaction_id !== 'RECEIPT_UPLOADED' && (
+                            <span className="font-mono bg-white text-emerald-950 px-2 py-0.5 rounded border border-emerald-300 font-black">
+                              UTR: {(school as any).payment_transaction_id}
+                            </span>
+                          )}
+                          {(school as any).payment_screenshot_path && (
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setPreviewModalUrl((school as any).payment_screenshot_path);
+                                  setPreviewModalTitle(`Payment Screenshot - ${item.participatingSchool.school_name}`);
+                                }}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-black transition-all cursor-pointer shadow-2xs"
+                              >
+                                <ImageIcon className="w-3.5 h-3.5" />
+                                <span>View Payment Screenshot</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDownload((school as any).payment_screenshot_path, `${item.participatingSchool.school_name}_Payment_Screenshot.jpg`)}
+                                title="Download payment receipt file"
+                                className="p-1 hover:bg-emerald-100 text-emerald-800 rounded cursor-pointer"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -1651,6 +1693,46 @@ ALTER TABLE public.schools ALTER COLUMN registered_by_user_id DROP NOT NULL;`}
                       className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold focus:outline-none focus:border-blue-600 bg-white"
                     />
                   </div>
+
+                  <div>
+                    <label className="block text-xs font-extrabold uppercase text-slate-700 mb-1.5">
+                      Payment Transaction ID / UTR
+                    </label>
+                    <input
+                      type="text"
+                      value={editPaymentTxnId}
+                      onChange={(e) => setEditPaymentTxnId(e.target.value)}
+                      placeholder="e.g. 4289XXXXXXXX"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 font-mono text-sm font-semibold focus:outline-none focus:border-blue-600 bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-extrabold uppercase text-slate-700 mb-1.5">
+                      Payment Screenshot Path / URL
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={editPaymentScreenshot}
+                        onChange={(e) => setEditPaymentScreenshot(e.target.value)}
+                        placeholder="URL or Path to Payment Receipt"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-mono font-semibold focus:outline-none focus:border-blue-600 bg-white"
+                      />
+                      {editPaymentScreenshot && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPreviewModalUrl(editPaymentScreenshot);
+                            setPreviewModalTitle(`Payment Receipt Preview`);
+                          }}
+                          className="px-3 py-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-xl text-xs font-bold shrink-0 cursor-pointer"
+                        >
+                          View
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -1814,6 +1896,75 @@ ALTER TABLE public.schools ALTER COLUMN registered_by_user_id DROP NOT NULL;`}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* POPUP PREVIEW MODAL FOR PAYMENT SCREENSHOTS & DOCUMENTS */}
+      {previewModalUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border-2 border-slate-200">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
+                  <ImageIcon className="w-5 h-5" />
+                </div>
+                <h3 className="font-black text-slate-900 text-base sm:text-lg truncate">
+                  {previewModalTitle || 'Payment Screenshot Preview'}
+                </h3>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <a
+                  href={previewModalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Open Full</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => handleDownload(previewModalUrl, 'Payment_Screenshot.jpg')}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewModalUrl(null)}
+                  className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded-xl transition-all cursor-pointer ml-1"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body: Image / PDF preview */}
+            <div className="p-4 sm:p-6 overflow-auto flex items-center justify-center bg-slate-100/60 min-h-[300px]">
+              {previewModalUrl.startsWith('data:application/pdf') || previewModalUrl.toLowerCase().endsWith('.pdf') ? (
+                <iframe
+                  src={previewModalUrl}
+                  title="PDF Preview"
+                  className="w-full h-[65vh] rounded-2xl border border-slate-300 bg-white"
+                />
+              ) : (
+                <img
+                  src={previewModalUrl}
+                  alt="Payment Receipt Screenshot"
+                  className="max-h-[65vh] max-w-full rounded-2xl object-contain shadow-md border border-slate-200 bg-white"
+                />
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-3 bg-slate-50 border-t border-slate-200 text-center">
+              <span className="text-xs text-slate-500 font-semibold">
+                Verified payment receipt submitted during State-Level GK Quiz Contest 2026 registration
+              </span>
+            </div>
           </div>
         </div>
       )}
