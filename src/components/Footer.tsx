@@ -30,19 +30,28 @@ export const Footer: React.FC = () => {
           <div className="flex flex-wrap items-center justify-center gap-3 text-xs">
             <div className="flex items-center gap-2 px-3.5 py-2 bg-slate-800/90 rounded-xl border border-slate-700">
               <Phone className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-slate-400">Event Queries:</span>
-              <span className="text-white font-bold">Ibrahim Faiz</span>
-              <a href="tel:+919850461062" className="text-emerald-400 font-extrabold hover:underline">
-                +91 98504 61062
+              <span className="text-slate-400">Coordinator:</span>
+              <span className="text-white font-bold">Dr. Rais Khan</span>
+              <a href="tel:+919923479476" className="text-emerald-400 font-extrabold hover:underline">
+                +91 99234 79476
               </a>
             </div>
 
             <div className="flex items-center gap-2 px-3.5 py-2 bg-slate-800/90 rounded-xl border border-slate-700">
               <Phone className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-slate-400">Assistance:</span>
-              <span className="text-white font-bold">Dr. Rais Khan</span>
-              <a href="tel:+919923479476" className="text-emerald-400 font-extrabold hover:underline">
-                +91 99234 79476
+              <span className="text-slate-400">Coordinator:</span>
+              <span className="text-white font-bold">Sameer Aagha</span>
+              <a href="tel:+919673692003" className="text-emerald-400 font-extrabold hover:underline">
+                +91 96736 92003
+              </a>
+            </div>
+
+            <div className="flex items-center gap-2 px-3.5 py-2 bg-slate-800/90 rounded-xl border border-slate-700">
+              <Phone className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-slate-400">Coordinator:</span>
+              <span className="text-white font-bold">Akhlaque Patel</span>
+              <a href="tel:+919975103553" className="text-emerald-400 font-extrabold hover:underline">
+                +91 99751 03553
               </a>
             </div>
 
@@ -74,7 +83,7 @@ export const Footer: React.FC = () => {
 
         <div className="text-center sm:text-left text-[11px] text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p>© 2026 State-Level GK Quiz Contest. All rights reserved.</p>
-          <p>For any registration queries or software difficulties, please contact Ibrahim Faiz, Dr. Rais Khan, or Rehan Chougale.</p>
+          <p>For any registration queries or difficulties, contact Dr. Rais Khan, Sameer Aagha, Akhlaque Patel, or Rehan Chougale.</p>
         </div>
       </div>
     </footer>

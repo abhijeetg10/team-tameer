@@ -196,7 +196,7 @@ export const SimpleRegistrationPage: React.FC = () => {
     }
     if (alreadyRegisteredSchool) {
       setErrorMessage(
-        `This school (${schoolName}) is already registered! If you have any queries or need assistance, please contact Ibrahim Faiz (+91 98504 61062), Dr. Rais Khan (+91 99234 79476), or Rehan Chougale (7588171372).`
+        `This school (${schoolName}) is already registered! If you have any queries or need assistance, please contact Dr. Rais Khan (+91 99234 79476), Sameer Aagha (+91 96736 92003), or Akhlaque Patel (+91 99751 03553).`
       );
       return;
     }
@@ -334,7 +334,7 @@ export const SimpleRegistrationPage: React.FC = () => {
         city: (district as District) || 'Kolhapur',
         principal_name: principalName || 'Principal',
         school_email: mentorEmail || 'school@gkquiz2026.org',
-        contact_number: principalPhone || mentorPhone || '9850461062',
+        contact_number: principalPhone || mentorPhone || '9923479476',
         status: 'submitted',
         submitted_at: new Date().toISOString(),
         created_at: new Date().toISOString(),
@@ -656,13 +656,16 @@ export const SimpleRegistrationPage: React.FC = () => {
               If you need to update any student or mentor details, contact the organizing team or technical support:
             </p>
             <div className="flex flex-wrap gap-4 text-xs font-bold pt-1">
-              <a href="tel:+919850461062" className="text-blue-700 hover:underline">
-                📞 Ibrahim Faiz: +91 98504 61062
-              </a>
               <a href="tel:+919923479476" className="text-blue-700 hover:underline">
                 📞 Dr. Rais Khan: +91 99234 79476
               </a>
-              <a href="tel:7588171372" className="text-blue-700 hover:underline">
+              <a href="tel:+919673692003" className="text-blue-700 hover:underline">
+                📞 Sameer Aagha: +91 96736 92003
+              </a>
+              <a href="tel:+919975103553" className="text-blue-700 hover:underline">
+                📞 Akhlaque Patel: +91 99751 03553
+              </a>
+              <a href="tel:7588171372" className="text-purple-700 hover:underline">
                 💻 Rehan Chougale: 7588171372 (Software Support)
               </a>
             </div>
@@ -883,21 +886,7 @@ export const SimpleRegistrationPage: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 border-t border-amber-200">
                   <div className="p-4 bg-white rounded-xl border border-amber-200 shadow-2xs space-y-1">
                     <p className="text-xs font-black uppercase tracking-wider text-slate-500">
-                      Event Administration
-                    </p>
-                    <p className="font-black text-slate-900 text-base">Ibrahim Faiz</p>
-                    <a
-                      href="tel:+919850461062"
-                      className="inline-flex items-center gap-2 text-blue-700 font-extrabold text-sm hover:underline pt-0.5"
-                    >
-                      <Phone className="w-4 h-4 text-emerald-600" />
-                      <span>+91 98504 61062</span>
-                    </a>
-                  </div>
-
-                  <div className="p-4 bg-white rounded-xl border border-amber-200 shadow-2xs space-y-1">
-                    <p className="text-xs font-black uppercase tracking-wider text-slate-500">
-                      Event Queries & Assistance
+                      Event Coordinator
                     </p>
                     <p className="font-black text-slate-900 text-base">Dr. Rais Khan</p>
                     <a
@@ -911,15 +900,29 @@ export const SimpleRegistrationPage: React.FC = () => {
 
                   <div className="p-4 bg-white rounded-xl border border-amber-200 shadow-2xs space-y-1">
                     <p className="text-xs font-black uppercase tracking-wider text-slate-500">
-                      Software Support
+                      Event Coordinator
                     </p>
-                    <p className="font-black text-slate-900 text-base">Rehan Chougale</p>
+                    <p className="font-black text-slate-900 text-base">Sameer Aagha</p>
                     <a
-                      href="tel:7588171372"
+                      href="tel:+919673692003"
                       className="inline-flex items-center gap-2 text-blue-700 font-extrabold text-sm hover:underline pt-0.5"
                     >
                       <Phone className="w-4 h-4 text-emerald-600" />
-                      <span>7588171372</span>
+                      <span>+91 96736 92003</span>
+                    </a>
+                  </div>
+
+                  <div className="p-4 bg-white rounded-xl border border-amber-200 shadow-2xs space-y-1">
+                    <p className="text-xs font-black uppercase tracking-wider text-slate-500">
+                      Event Coordinator
+                    </p>
+                    <p className="font-black text-slate-900 text-base">Akhlaque Patel</p>
+                    <a
+                      href="tel:+919975103553"
+                      className="inline-flex items-center gap-2 text-blue-700 font-extrabold text-sm hover:underline pt-0.5"
+                    >
+                      <Phone className="w-4 h-4 text-emerald-600" />
+                      <span>+91 99751 03553</span>
                     </a>
                   </div>
                 </div>
@@ -1455,18 +1458,25 @@ export const SimpleRegistrationPage: React.FC = () => {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <a
-              href="tel:+919850461062"
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-900 rounded-xl border border-blue-200 text-xs sm:text-sm font-extrabold transition-all"
-            >
-              <Phone className="w-4 h-4 text-emerald-600" />
-              <span>Ibrahim Faiz: +91 98504 61062</span>
-            </a>
-            <a
               href="tel:+919923479476"
               className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 rounded-xl border border-emerald-200 text-xs sm:text-sm font-extrabold transition-all"
             >
               <Phone className="w-4 h-4 text-emerald-600" />
               <span>Dr. Rais Khan: +91 99234 79476</span>
+            </a>
+            <a
+              href="tel:+919673692003"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-900 rounded-xl border border-blue-200 text-xs sm:text-sm font-extrabold transition-all"
+            >
+              <Phone className="w-4 h-4 text-blue-600" />
+              <span>Sameer Aagha: +91 96736 92003</span>
+            </a>
+            <a
+              href="tel:+919975103553"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 rounded-xl border border-emerald-200 text-xs sm:text-sm font-extrabold transition-all"
+            >
+              <Phone className="w-4 h-4 text-emerald-600" />
+              <span>Akhlaque Patel: +91 99751 03553</span>
             </a>
             <a
               href="tel:7588171372"

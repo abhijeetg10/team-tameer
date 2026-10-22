@@ -416,35 +416,11 @@ export const LandingPage: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Contact 1: Ibrahim Faiz */}
-            <div className="p-6 sm:p-8 rounded-2xl bg-gradient-to-br from-blue-50/70 to-white border-2 border-blue-200 flex flex-col justify-between space-y-4 hover:shadow-md transition-all">
-              <div>
-                <span className="text-xs font-extrabold uppercase tracking-wider text-blue-700 bg-blue-100 px-3 py-1 rounded-lg">
-                  Event Administration
-                </span>
-                <h4 className="text-xl sm:text-2xl font-black text-slate-900 mt-3">
-                  Ibrahim Faiz
-                </h4>
-                <p className="text-sm text-slate-600 font-medium mt-1">
-                  Contact for school accreditation, participation approvals, mentor queries, and event coordination.
-                </p>
-              </div>
-              <div className="pt-3 border-t border-blue-100">
-                <a
-                  href="tel:+919850461062"
-                  className="inline-flex items-center gap-2.5 px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-base font-extrabold shadow-sm transition-all w-full justify-center"
-                >
-                  <Phone className="w-5 h-5" />
-                  <span>+91 98504 61062</span>
-                </a>
-              </div>
-            </div>
-
-            {/* Contact 2: Dr. Rais Khan */}
+            {/* Contact 1: Dr. Rais Khan */}
             <div className="p-6 sm:p-8 rounded-2xl bg-gradient-to-br from-emerald-50/70 to-white border-2 border-emerald-200 flex flex-col justify-between space-y-4 hover:shadow-md transition-all">
               <div>
                 <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-3 py-1 rounded-lg">
-                  Event Queries & Assistance
+                  Event Coordinator
                 </span>
                 <h4 className="text-xl sm:text-2xl font-black text-slate-900 mt-3">
                   Dr. Rais Khan
@@ -464,26 +440,50 @@ export const LandingPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Contact 3: Rehan Chougale */}
+            {/* Contact 2: Sameer Aagha */}
+            <div className="p-6 sm:p-8 rounded-2xl bg-gradient-to-br from-blue-50/70 to-white border-2 border-blue-200 flex flex-col justify-between space-y-4 hover:shadow-md transition-all">
+              <div>
+                <span className="text-xs font-extrabold uppercase tracking-wider text-blue-700 bg-blue-100 px-3 py-1 rounded-lg">
+                  Event Coordinator
+                </span>
+                <h4 className="text-xl sm:text-2xl font-black text-slate-900 mt-3">
+                  Sameer Aagha
+                </h4>
+                <p className="text-sm text-slate-600 font-medium mt-1">
+                  Contact for school accreditation, participation details, mentor queries, and coordination.
+                </p>
+              </div>
+              <div className="pt-3 border-t border-blue-100">
+                <a
+                  href="tel:+919673692003"
+                  className="inline-flex items-center gap-2.5 px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-base font-extrabold shadow-sm transition-all w-full justify-center"
+                >
+                  <Phone className="w-5 h-5" />
+                  <span>+91 96736 92003</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Contact 3: Akhlaque Patel */}
             <div className="p-6 sm:p-8 rounded-2xl bg-gradient-to-br from-purple-50/70 to-white border-2 border-purple-200 flex flex-col justify-between space-y-4 hover:shadow-md transition-all">
               <div>
                 <span className="text-xs font-extrabold uppercase tracking-wider text-purple-700 bg-purple-100 px-3 py-1 rounded-lg">
-                  Software Support
+                  Event Coordinator
                 </span>
                 <h4 className="text-xl sm:text-2xl font-black text-slate-900 mt-3">
-                  Rehan Chougale
+                  Akhlaque Patel
                 </h4>
                 <p className="text-sm text-slate-600 font-medium mt-1">
-                  Contact for login issues, portal bugs, registration form difficulties, document upload, or software queries.
+                  Contact for institution liaison, student registrations, and conclave coordination.
                 </p>
               </div>
               <div className="pt-3 border-t border-purple-100">
                 <a
-                  href="tel:7588171372"
+                  href="tel:+919975103553"
                   className="inline-flex items-center gap-2.5 px-5 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-base font-extrabold shadow-sm transition-all w-full justify-center"
                 >
                   <Phone className="w-5 h-5" />
-                  <span>7588171372</span>
+                  <span>+91 99751 03553</span>
                 </a>
               </div>
             </div>
