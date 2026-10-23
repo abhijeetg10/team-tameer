@@ -12,15 +12,14 @@ import {
   ArrowLeft,
   Lock,
   Phone,
-  Mail,
   Download,
-  Printer,
   ImageIcon,
   CreditCard,
   Check,
   Copy,
   UploadCloud,
-  ExternalLink
+  ExternalLink,
+  X
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { GoogleSignInButton } from '../components/GoogleSignInButton';
@@ -73,6 +72,7 @@ export const SimpleRegistrationPage: React.FC = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [submittedRegId, setSubmittedRegId] = useState<string>('');
   const [submittedRegistration, setSubmittedRegistration] = useState<FullSchoolRegistration | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -226,9 +226,9 @@ export const SimpleRegistrationPage: React.FC = () => {
       return;
     }
 
-    // Payment Verification: Screenshot or Transaction ID validation
-    if (!paymentScreenshot.trim() && !transactionId.trim()) {
-      setErrorMessage('Please upload the Payment Screenshot or enter the UPI Transaction ID / UTR Number for the Registration Fee of Rs. 1000 (paid to 8793224533 - Amin Karmalkar).');
+    // Payment Verification: Payment Screenshot is strictly required
+    if (!paymentScreenshot.trim()) {
+      setErrorMessage('Please upload the Payment Screenshot of ₹1,000 paid to 8793224533 (Amin Karmalkar).');
       return;
     }
 
@@ -278,11 +278,12 @@ export const SimpleRegistrationPage: React.FC = () => {
 
       // Save draft and submit
       const saved = await api.saveSchoolDraft(user?.id || `user-${Date.now()}`, schoolData, mentorData, studentsData);
-      const submitted = await api.submitRegistration(saved.school.id, mentorEmail || user?.google_email || 'school@gkquiz2026.org');
+      const submitted = await api.submitRegistration(saved.school.id, mentorEmail || user?.google_email || 'school@gkquiz2026.org', saved);
 
       setSubmittedRegId(regId);
       setSubmittedRegistration(submitted);
       setIsSubmitted(true);
+      setShowDownloadModal(true);
     } catch (err: any) {
       setErrorMessage(err.message || 'Failed to submit registration. Please try again.');
     } finally {
@@ -711,6 +712,69 @@ export const SimpleRegistrationPage: React.FC = () => {
               Back to Home
             </Link>
           </div>
+
+          {/* DOWNLOAD OFFICIAL REGISTRATION PDF POPUP MODAL */}
+          {showDownloadModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200">
+              <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border-2 border-emerald-300 p-6 sm:p-8 space-y-6 text-center transform animate-in zoom-in-95 duration-200">
+                {/* Close Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowDownloadModal(false)}
+                  className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-all cursor-pointer"
+                  aria-label="Close modal"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+
+                {/* Animated Badge */}
+                <div className="w-16 h-16 mx-auto rounded-3xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-white flex items-center justify-center shadow-lg shadow-emerald-200">
+                  <FileText className="w-8 h-8 animate-bounce" />
+                </div>
+
+                <div className="space-y-2">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black uppercase tracking-wider">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Registration Complete</span>
+                  </div>
+                  <h3 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                    Official Pass is Ready!
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-600 max-w-sm mx-auto leading-relaxed">
+                    Your registration form has been officially recorded. Download and print the stamped A4 PDF pass for your school delegation.
+                  </p>
+                </div>
+
+                {/* Registration Number display */}
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 inline-block w-full">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Official Registration Number</p>
+                  <p className="text-2xl sm:text-3xl font-mono font-black text-emerald-700 mt-1">{submittedRegId}</p>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="space-y-2.5 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleDownloadPDF();
+                    }}
+                    className="w-full flex items-center justify-center gap-2.5 py-4 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white text-base sm:text-lg font-black shadow-lg hover:shadow-xl transition-all cursor-pointer ring-4 ring-emerald-300/40"
+                  >
+                    <Download className="w-5 h-5" />
+                    <span>Download Official PDF Pass</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowDownloadModal(false)}
+                    className="w-full py-2.5 text-xs font-bold text-slate-500 hover:text-slate-800 transition-all cursor-pointer"
+                  >
+                    View Registration Details First
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -863,12 +927,6 @@ export const SimpleRegistrationPage: React.FC = () => {
                   );
                 })}
               </select>
-              {district === 'Satara' && (
-                <p className="text-sm text-purple-800 font-bold mt-2.5 flex items-center gap-1.5">
-                  <span>✓</span>
-                  <span>Includes Tanzeem e Waliden Urdu High School Wai satara & ANJUMAN KHAIRUL ISLAM URDU HIGH SCHOOL MAHABALESHWAR</span>
-                </p>
-              )}
             </div>
 
             {/* ALREADY REGISTERED NOTICE & CONTACT ADMIN BANNER */}
@@ -1345,7 +1403,7 @@ export const SimpleRegistrationPage: React.FC = () => {
                   </span>
                 </div>
                 <p className="text-sm sm:text-base text-slate-500 mt-0.5">
-                  Complete the ₹1,000 registration fee payment via GPay or PhonePe and enter the transaction ID
+                  Complete the ₹1,000 registration fee payment via GPay or PhonePe and upload the payment screenshot
                 </p>
               </div>
             </div>
@@ -1404,8 +1462,8 @@ export const SimpleRegistrationPage: React.FC = () => {
                   <ol className="list-decimal pl-5 space-y-1 text-slate-600 font-medium">
                     <li>Open <strong>Google Pay (GPay)</strong> or <strong>PhonePe</strong> on your smartphone.</li>
                     <li>Pay <strong className="text-slate-900 font-black">₹1,000</strong> to mobile number <strong className="text-slate-900 font-black font-mono">8793224533</strong> (Amin Karmalkar).</li>
-                    <li>Copy or note down the <strong>UPI Transaction ID / UTR Number</strong> from the payment receipt.</li>
-                    <li>Enter the Transaction ID in the box on the right before submitting the form.</li>
+                    <li>Take a clear screenshot of the successful payment receipt.</li>
+                    <li>Upload the screenshot in the box on the right before submitting the registration.</li>
                   </ol>
                 </div>
               </div>
@@ -1416,7 +1474,7 @@ export const SimpleRegistrationPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Payment Verification Card: Screenshot Upload & Transaction ID */}
+                {/* Payment Verification Card: Screenshot Upload */}
             <div className="rounded-3xl border-2 border-slate-200 p-6 sm:p-8 flex flex-col justify-between space-y-6 bg-slate-50/40">
               <div className="space-y-5">
                 <div className="flex items-center gap-2.5">
@@ -1425,7 +1483,7 @@ export const SimpleRegistrationPage: React.FC = () => {
                   </div>
                   <div>
                     <h3 className="text-lg font-black text-slate-900">Upload Payment Screenshot</h3>
-                    <p className="text-xs text-slate-500 font-medium">Upload GPay / PhonePe receipt screenshot for instant verification</p>
+                    <p className="text-xs text-slate-500 font-medium">Upload GPay / PhonePe receipt screenshot for registration verification</p>
                   </div>
                 </div>
 
@@ -1474,7 +1532,7 @@ export const SimpleRegistrationPage: React.FC = () => {
                       </button>
                     </div>
                   ) : (
-                    <div className="relative border-2 border-dashed border-emerald-300 hover:border-emerald-500 bg-white hover:bg-emerald-50/30 rounded-2xl p-6 text-center transition-all cursor-pointer group">
+                    <div className="relative border-2 border-dashed border-emerald-300 hover:border-emerald-500 bg-white hover:bg-emerald-50/30 rounded-2xl p-8 text-center transition-all cursor-pointer group">
                       <input
                         type="file"
                         accept="image/*,application/pdf"
@@ -1501,29 +1559,11 @@ export const SimpleRegistrationPage: React.FC = () => {
                           </p>
                         </div>
                         <span className="inline-block px-3 py-1 bg-emerald-100 text-emerald-800 rounded-lg text-[11px] font-extrabold uppercase tracking-wide">
-                          Upload GPay / PhonePe Receipt
+                          Upload GPay / PhonePe Receipt Screenshot
                         </span>
                       </div>
                     </div>
                   )}
-                </div>
-
-                {/* Optional UPI Transaction ID / UTR Number */}
-                <div className="space-y-1.5 pt-1">
-                  <label htmlFor="transactionIdInput" className="block text-xs font-extrabold text-slate-700 uppercase tracking-wider">
-                    UPI Transaction ID / UTR Number <span className="text-slate-400 font-semibold normal-case">(Optional if screenshot attached)</span>
-                  </label>
-                  <input
-                    id="transactionIdInput"
-                    type="text"
-                    value={transactionId}
-                    onChange={(e) => setTransactionId(e.target.value)}
-                    placeholder="e.g. 4289XXXXXXXX or UPI Ref No."
-                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 font-mono text-sm sm:text-base font-bold text-slate-900 bg-white focus:outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100 shadow-sm transition-all placeholder:font-sans placeholder:text-slate-400 placeholder:text-xs"
-                  />
-                  <p className="text-[11px] text-slate-500 font-medium">
-                    You can either upload the payment screenshot above or provide the Transaction ID.
-                  </p>
                 </div>
               </div>
 

@@ -1038,15 +1038,38 @@ export const api = {
    * Final Submission of School Registration
    * Database persistence is prioritized; optional cache write failure cannot interrupt registration.
    */
-  async submitRegistration(schoolId: string, actorEmail: string): Promise<FullSchoolRegistration> {
+  async submitRegistration(schoolId: string, actorEmail: string, fallbackRegistration?: FullSchoolRegistration): Promise<FullSchoolRegistration> {
     const schools = await this.getAllSchools();
 
-    const index = schools.findIndex(s => s.school.id === schoolId || s.school.participating_school_id === schoolId);
-    if (index === -1) {
-      throw new Error('School registration not found.');
+    let index = schools.findIndex(s => s.school.id === schoolId || s.school.participating_school_id === schoolId);
+
+    // If not found by ID or if schoolId is an in-memory/DB id that differs, try matching by registration_id or school name
+    if (index === -1 && fallbackRegistration) {
+      index = schools.findIndex(s => 
+        (fallbackRegistration.school.registration_id && s.school.registration_id === fallbackRegistration.school.registration_id) ||
+        (fallbackRegistration.school.school_name && s.school.school_name && s.school.school_name.trim().toLowerCase() === fallbackRegistration.school.school_name.trim().toLowerCase())
+      );
     }
 
-    let reg = schools[index];
+    let reg: FullSchoolRegistration;
+    if (index !== -1) {
+      reg = schools[index];
+      // If the found record has incomplete student info (e.g. from an older remote DB state) but fallback has full info, merge fallback info
+      if (fallbackRegistration && fallbackRegistration.students && fallbackRegistration.students.length >= 3) {
+        if (!reg.students || reg.students.some((st, i) => !st?.full_name?.trim() || !st?.class_name?.trim())) {
+          reg.students = fallbackRegistration.students;
+        }
+        if (!reg.mentor?.full_name?.trim() && fallbackRegistration.mentor?.full_name?.trim()) {
+          reg.mentor = fallbackRegistration.mentor;
+        }
+      }
+    } else if (fallbackRegistration) {
+      reg = fallbackRegistration;
+      schools.push(reg);
+      index = schools.length - 1;
+    } else {
+      throw new Error('School registration not found.');
+    }
 
     // Enforce 1 Mentor presence
     if (!reg.mentor.full_name || !reg.mentor.phone) {

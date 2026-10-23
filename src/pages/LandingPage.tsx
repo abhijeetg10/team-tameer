@@ -360,7 +360,7 @@ export const LandingPage: React.FC = () => {
             <h3 className="text-2xl font-black text-slate-900">Satara</h3>
             <p className="text-3xl font-extrabold text-purple-600">8 Schools</p>
             <p className="text-sm text-slate-500 leading-relaxed">
-              Including <strong className="text-slate-800">Tanzeem e Waliden Urdu High School Wai</strong> and <strong className="text-slate-800">ANJUMAN KHAIRUL ISLAM URDU HIGH SCHOOL MAHABALESHWAR</strong>.
+              Official accredited institutions from Satara district.
             </p>
           </div>
         </div>

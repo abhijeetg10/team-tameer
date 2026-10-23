@@ -243,7 +243,7 @@ export const RegistrationWizard: React.FC = () => {
       const saved = await api.saveSchoolDraft(user?.id || 'guest', school, mentor, students);
       
       // Submit registration
-      const result = await api.submitRegistration(saved.school.id, user?.google_email || 'school@portal.org');
+      const result = await api.submitRegistration(saved.school.id, user?.google_email || 'school@portal.org', saved);
       setSubmittedRegistration(result);
 
       // Trigger Confetti
