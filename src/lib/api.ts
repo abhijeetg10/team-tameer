@@ -552,13 +552,23 @@ async function persistSchoolToDatabase(
           .maybeSingle();
 
         if (existingStu) {
-          const { error: sErr } = await supabase.from('students').update(stuPayload).eq('id', existingStu.id);
+          let { error: sErr } = await supabase.from('students').update(stuPayload).eq('id', existingStu.id);
+          if (sErr && sErr.message.includes('student_registration_number')) {
+            const { student_registration_number, ...stripped } = stuPayload;
+            const res = await supabase.from('students').update(stripped).eq('id', existingStu.id);
+            sErr = res.error;
+          }
           if (sErr) {
             console.warn('Supabase student update warning:', sErr.message);
             return false;
           }
         } else {
-          const { error: sErr } = await supabase.from('students').insert(stuPayload);
+          let { error: sErr } = await supabase.from('students').insert(stuPayload);
+          if (sErr && sErr.message.includes('student_registration_number')) {
+            const { student_registration_number, ...stripped } = stuPayload;
+            const res = await supabase.from('students').insert(stripped);
+            sErr = res.error;
+          }
           if (sErr) {
             console.warn('Supabase student insert warning:', sErr.message);
             return false;
