@@ -215,14 +215,38 @@ export const SimpleRegistrationPage: React.FC = () => {
       setErrorMessage('Please enter all Faculty Mentor details (Full Name, Designation, Phone Number, and Official Email Address).');
       return;
     }
-
-    // Check all 3 mandatory students have full name, class, and roll / registration number
-    const missingStudentFields = students.some(
-      s => !s.name.trim() || !s.className.trim() || !s.studentRegistrationNumber.trim()
-    );
-    if (missingStudentFields) {
-      setErrorMessage('Please provide Full Name, Class (8th or 9th), and Reg / Roll Number for all 3 student delegates.');
+    if (!mentorPhoto.trim()) {
+      setErrorMessage('Please upload the Faculty Mentor Photograph.');
       return;
+    }
+    if (!mentorIdDoc.trim()) {
+      setErrorMessage('Please upload the Faculty Mentor ID Proof or Authority Letter.');
+      return;
+    }
+
+    // Check all 3 mandatory students have full name, class, roll/registration number, photo, and school ID proof
+    for (let i = 0; i < students.length; i++) {
+      const s = students[i];
+      if (!s.name.trim()) {
+        setErrorMessage(`Please enter Full Name for Student #${i + 1}.`);
+        return;
+      }
+      if (!s.className.trim()) {
+        setErrorMessage(`Please select Class (8th or 9th Standard) for Student #${i + 1}.`);
+        return;
+      }
+      if (!s.studentRegistrationNumber.trim()) {
+        setErrorMessage(`Please enter Reg / Roll Number for Student #${i + 1}.`);
+        return;
+      }
+      if (!s.photo.trim()) {
+        setErrorMessage(`Please upload Photograph for Student #${i + 1} (${s.name.trim()}).`);
+        return;
+      }
+      if (!s.idDoc.trim()) {
+        setErrorMessage(`Please upload School ID / Bona Fide Proof for Student #${i + 1} (${s.name.trim()}).`);
+        return;
+      }
     }
 
     // Payment Verification: Payment Screenshot is strictly required
@@ -1135,7 +1159,14 @@ export const SimpleRegistrationPage: React.FC = () => {
           {/* Mentor Photo & Document Upload */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
             <div className="p-6 bg-slate-50 border-2 border-slate-200 rounded-3xl space-y-3">
-              <span className="block text-base font-bold text-slate-800">Mentor Photo</span>
+              <div className="flex items-center justify-between">
+                <span className="block text-base font-bold text-slate-800">
+                  Mentor Photo <span className="text-rose-500">*</span>
+                </span>
+                <span className="text-[10px] text-emerald-800 font-extrabold uppercase bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200">
+                  Required
+                </span>
+              </div>
               {mentorPhoto ? (
                 <div className="flex items-center gap-4 p-2 bg-white rounded-2xl border border-slate-200 shadow-2xs">
                   <img src={mentorPhoto} alt="Mentor" className="w-16 h-16 object-cover rounded-xl border border-slate-300 shadow-2xs" />
@@ -1153,7 +1184,14 @@ export const SimpleRegistrationPage: React.FC = () => {
             </div>
 
             <div className="p-6 bg-slate-50 border-2 border-slate-200 rounded-3xl space-y-3">
-              <span className="block text-base font-bold text-slate-800">Mentor ID Proof / Authority Letter</span>
+              <div className="flex items-center justify-between">
+                <span className="block text-base font-bold text-slate-800">
+                  Mentor ID Proof / Authority Letter <span className="text-rose-500">*</span>
+                </span>
+                <span className="text-[10px] text-emerald-800 font-extrabold uppercase bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200">
+                  Required
+                </span>
+              </div>
               {mentorIdDoc ? (
                 <div className="flex items-center gap-4 p-2 bg-white rounded-2xl border border-slate-200 shadow-2xs">
                   <FileText className="w-10 h-10 text-blue-600" />
@@ -1295,61 +1333,65 @@ export const SimpleRegistrationPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* 4. Student Photo & ID Proof Upload Tiles (Clean Stacked Layout) */}
-                  <div className="space-y-3 pt-4 border-t border-slate-100">
-                    {/* Student Photo */}
-                    <div className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-200/90 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                          <ImageIcon className="w-3.5 h-3.5 text-purple-600" />
-                          <span>Student Photo</span>
-                        </span>
-                        {student.photo ? (
-                          <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                            ✓ Attached
+                    {/* 4. Student Photo & ID Proof Upload Tiles (Clean Stacked Layout) */}
+                    <div className="space-y-3 pt-4 border-t border-slate-100">
+                      {/* Student Photo */}
+                      <div className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-200/90 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                            <ImageIcon className="w-3.5 h-3.5 text-purple-600" />
+                            <span>Student Photo <span className="text-rose-500">*</span></span>
                           </span>
-                        ) : (
-                          <span className="text-[11px] text-slate-400 font-medium">JPG / PNG</span>
-                        )}
-                      </div>
-
-                      {student.photo ? (
-                        <div className="flex items-center gap-2.5 p-2 bg-white rounded-xl border border-slate-200 shadow-2xs">
-                          <img src={student.photo} alt={student.name || 'Student'} className="w-10 h-10 rounded-lg object-cover border border-slate-200" />
-                          <span className="text-xs font-bold text-slate-800 truncate">Photo attached</span>
-                          <button
-                            type="button"
-                            onClick={() => updateStudent(idx, 'photo', '')}
-                            className="text-xs text-rose-500 hover:text-rose-700 ml-auto font-bold cursor-pointer"
-                          >
-                            Remove
-                          </button>
+                          {student.photo ? (
+                            <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                              ✓ Attached
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-purple-700 font-bold uppercase bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                              Required
+                            </span>
+                          )}
                         </div>
-                      ) : (
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleFileUpload(e, (url) => updateStudent(idx, 'photo', url), 'photos')}
-                          className="block w-full text-xs text-slate-500 file:mr-2.5 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-purple-100 file:text-purple-800 hover:file:bg-purple-200 cursor-pointer"
-                        />
-                      )}
-                    </div>
 
-                    {/* School ID / Bona Fide Proof */}
-                    <div className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-200/90 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                          <FileText className="w-3.5 h-3.5 text-purple-600" />
-                          <span>School ID / Proof</span>
-                        </span>
-                        {student.idDoc ? (
-                          <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                            ✓ Attached
-                          </span>
+                        {student.photo ? (
+                          <div className="flex items-center gap-2.5 p-2 bg-white rounded-xl border border-slate-200 shadow-2xs">
+                            <img src={student.photo} alt={student.name || 'Student'} className="w-10 h-10 rounded-lg object-cover border border-slate-200" />
+                            <span className="text-xs font-bold text-slate-800 truncate">Photo attached</span>
+                            <button
+                              type="button"
+                              onClick={() => updateStudent(idx, 'photo', '')}
+                              className="text-xs text-rose-500 hover:text-rose-700 ml-auto font-bold cursor-pointer"
+                            >
+                              Remove
+                            </button>
+                          </div>
                         ) : (
-                          <span className="text-[11px] text-slate-400 font-medium">ID / PDF / Proof</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleFileUpload(e, (url) => updateStudent(idx, 'photo', url), 'photos')}
+                            className="block w-full text-xs text-slate-500 file:mr-2.5 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-purple-100 file:text-purple-800 hover:file:bg-purple-200 cursor-pointer"
+                          />
                         )}
                       </div>
+
+                      {/* School ID / Bona Fide Proof */}
+                      <div className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-200/90 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                            <FileText className="w-3.5 h-3.5 text-purple-600" />
+                            <span>School ID / Proof <span className="text-rose-500">*</span></span>
+                          </span>
+                          {student.idDoc ? (
+                            <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                              ✓ Attached
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-purple-700 font-bold uppercase bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                              Required
+                            </span>
+                          )}
+                        </div>
 
                       {student.idDoc ? (
                         <div className="flex items-center gap-2.5 p-2 bg-white rounded-xl border border-slate-200 shadow-2xs">
