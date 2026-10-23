@@ -471,11 +471,8 @@ export const generateAcknowledgementPDF = async (registration: FullSchoolRegistr
   doc.text('2. All students and the mentor must carry their original physical School ID cards.', 30, 693);
   doc.text('3. Do not submit full Aadhaar copies; the registration process does not retain them.', 30, 706);
   
-  // Registration Fee & Transaction Receipt Note
-  const txnId = (school as any).payment_transaction_id;
-  const payNote = txnId 
-    ? `4. Registration Fee: Rs. 1,000 Paid via GPay/PhonePe to Amin Karmalkar (Txn/UTR: ${txnId})`
-    : '4. Registration Fee: Rs. 1,000 Paid via GPay/PhonePe to Amin Karmalkar (8793224533)';
+  // Registration Fee & Payment Receipt Note
+  const payNote = '4. Registration Fee: Rs. 1,000 Paid via GPay/PhonePe to Amin Karmalkar (Receipt Screenshot Verified & Attached)';
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(teal[0], teal[1], teal[2]);
   doc.text(payNote, 30, 718, { maxWidth: 535 });

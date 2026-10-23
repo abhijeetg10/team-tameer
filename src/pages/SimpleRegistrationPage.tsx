@@ -65,7 +65,6 @@ export const SimpleRegistrationPage: React.FC = () => {
   ]);
 
   // Payment Details (Registration Fee: Rs. 1000 via GPay / PhonePe to 8793224533 - Amin Karmalkar)
-  const [transactionId, setTransactionId] = useState('');
   const [paymentScreenshot, setPaymentScreenshot] = useState('');
   const [isUploadingPaymentScreenshot, setIsUploadingPaymentScreenshot] = useState(false);
   const [paymentCopied, setPaymentCopied] = useState(false);
@@ -251,7 +250,7 @@ export const SimpleRegistrationPage: React.FC = () => {
         registration_id: regId,
         submitted_at: new Date().toISOString(),
         payment_amount: 1000,
-        payment_transaction_id: transactionId.trim() || 'RECEIPT_UPLOADED',
+        payment_transaction_id: 'RECEIPT_ATTACHED',
         payment_screenshot_path: paymentScreenshot.trim(),
         payment_status: 'paid' as const,
         payment_method: 'GPay / PhonePe (8793224533 - Amin Karmalkar)',
@@ -304,7 +303,6 @@ export const SimpleRegistrationPage: React.FC = () => {
     setMentorEmail('');
     setMentorPhoto('');
     setMentorIdDoc('');
-    setTransactionId('');
     setPaymentScreenshot('');
     setStudents([
       { name: '', className: '', studentRegistrationNumber: '', photo: '', idDoc: '' },
@@ -622,11 +620,6 @@ export const SimpleRegistrationPage: React.FC = () => {
                 <p className="text-xs text-slate-600 mt-0.5 font-medium">
                   Beneficiary: <strong>Amin Karmalkar</strong> (8793224533)
                 </p>
-                {submittedRegistration?.school.payment_transaction_id && submittedRegistration.school.payment_transaction_id !== 'RECEIPT_UPLOADED' && (
-                  <p className="text-xs font-mono text-emerald-950 font-bold mt-1">
-                    Transaction ID / UTR: <span className="bg-white px-2 py-0.5 rounded border border-emerald-300">{submittedRegistration.school.payment_transaction_id}</span>
-                  </p>
-                )}
               </div>
               {(submittedRegistration?.school.payment_screenshot_path || paymentScreenshot) && (
                 <div className="flex items-center gap-2">
